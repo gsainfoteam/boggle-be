@@ -14,10 +14,11 @@ datasource db {
 }
 
 model User {
-  uid         Int @id @default(autoincrement())
-  name        String
-  email       String
-  password    String
-  studentID   Int
-  major       String
+  uuid      String   @id @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  consent   Boolean
+
+  @@map("user")
 }
+
