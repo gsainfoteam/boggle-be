@@ -4,18 +4,18 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { AuthDto } from './dto/auth.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { UserDto } from './dto/user.dto';
 import { PayloadDto } from './dto/payload.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthRepository {
   private readonly logger = new Logger(AuthRepository.name);
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOrCreateUser(body: AuthDto): Promise<UserDto> {
+  async findOrCreateUser(body: LoginDto): Promise<UserDto> {
     return await this.prisma.user
       .findFirst({ where: { email: body.email } })
       .then(async (user) => {
@@ -52,5 +52,12 @@ export class AuthRepository {
         if (!user) throw new NotFoundException('User Not Found');
         return user;
       });
+  }
+
+  async deleteToken(payload: PayloadDto): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: payload.id },
+      data: { refreshToken: null },
+    });
   }
 }

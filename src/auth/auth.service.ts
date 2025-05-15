@@ -1,11 +1,11 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { TokenDto } from './dto/token.dto';
 import { PayloadDto } from './dto/payload.dto';
 import { ConfigService } from '@nestjs/config';
 import { AuthRepository } from './auth.repository';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -16,7 +16,7 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
   ) {}
 
-  async login(body: AuthDto): Promise<TokenDto> {
+  async login(body: LoginDto): Promise<TokenDto> {
     const user = await this.authRepository.findOrCreateUser(body);
 
     if (!(await bcrypt.compare(body.password, user.password)))
@@ -66,5 +66,16 @@ export class AuthService {
       this.logger.debug(err);
       throw new UnauthorizedException('Unauthorized Token');
     }
+  }
+
+  async logout(accessToken: string): Promise<void> {
+    const payload: PayloadDto & { iat } & { exp } = this.jwtService.verify(
+      accessToken,
+      {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      },
+    );
+
+    return this.authRepository.deleteToken(payload);
   }
 }
