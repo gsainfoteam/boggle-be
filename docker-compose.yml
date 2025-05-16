@@ -1,0 +1,31 @@
+version: '3'
+services:
+  db:
+    image: postgres:13
+    restart: always
+    container_name: prisma-db
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: boggle
+    ports:
+      - '5432:5432'
+    networks:
+      - app-network
+
+  app:
+    build: .
+    container_name: boggle
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

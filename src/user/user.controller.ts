@@ -1,7 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBody, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 @Controller('user')
 export class UserController {
@@ -17,8 +33,8 @@ export class UserController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.userService.findUser(id);
   }
-  
-  @Patch(':id')  
+
+  @Patch(':id')
   @ApiOperation({ summary: 'Uodate User' })
   @ApiBody({ type: UpdateUserDto })
   @ApiOkResponse({ description: 'User updated successfully' })
@@ -29,7 +45,6 @@ export class UserController {
     return this.userService.update(+id, updateUserDto);
   }
 
-  
   @Delete(':id')
   @ApiOperation({ summary: 'Delete User' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
