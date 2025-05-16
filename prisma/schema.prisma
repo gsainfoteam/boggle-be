@@ -33,7 +33,7 @@
     password        String
 
     name            String
-    studentId       Int  @unique 
+    studentId       Int
     major           String 
     refreshToken    String?
     
