@@ -34,7 +34,6 @@
     name            String
     email           String  @unique
     studentId       String  @unique 
-    phoneNumber     String  @unique 
     grade           String  
     major           String 
     

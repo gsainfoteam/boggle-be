@@ -19,30 +19,6 @@ export class UserService {
     return useri;
   }
 
-  async findAll() {
-    return await this.prisma.user.findMany();
-  }
-
-  async createUser(RegisterUserDto: RegisterUserDto) {
-    return await this.prisma.user.create({
-      data: 
-      {
-        name: RegisterUserDto.name,
-        password: RegisterUserDto.password,
-        email: RegisterUserDto.email,
-        studentId: RegisterUserDto.studentId,
-        phoneNumber: RegisterUserDto.phoneNumber,
-        major: RegisterUserDto.major,
-        grade: RegisterUserDto.grade,
-      }
-    }).catch((error) => {
-      if (error instanceof Prisma.PrismaClientKnownRequestError)
-        if (error.code === 'P2002')
-          throw new InternalServerErrorException('Personal information must not be duplicated');
-      throw new InternalServerErrorException();
-    });
-  }
-
   update(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
   }
