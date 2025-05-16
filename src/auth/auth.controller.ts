@@ -20,7 +20,8 @@ export class AuthController {
   @Post('login')
   @ApiOperation({
     summary: 'login',
-    description: 'login (and if user is not existed, create user)',
+    description:
+      'login (and if user is not existed, create user) and issue access-token and refresh-token',
   })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({
@@ -36,7 +37,7 @@ export class AuthController {
   @Post('refresh')
   @ApiOperation({
     summary: 'refresh token',
-    description: ' refresh token',
+    description: 'reissue access-token using refresh-token',
   })
   @ApiBody({ type: RefreshDto })
   @ApiOkResponse({
