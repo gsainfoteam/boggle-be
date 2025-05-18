@@ -25,25 +25,34 @@ export class UserService {
       },
     });
     if (!user) {
-      throw new NotFoundException('ID is Not Found');
+      throw new NotFoundException('User uuid is not found');
     }
     return plainToInstance(UserDto, user);
   }
 
   async updateUser(uuid: string, user: UserDto) {
-    return await this.prisma.user.update({
-      where: {
-        uuid: uuid,
-      },
-      data: {
-        uuid: user.uuid,
-        name: user.name,
-        email: user.email,
-        password: user.password,
-        studentId: user.studentId,
-        major: user.major,
-      },
-    });
+    return await this.prisma.user
+      .update({
+        where: {
+          uuid: uuid,
+        },
+        data: {
+          uuid: user.uuid,
+          name: user.name,
+          email: user.email,
+          password: user.password,
+          studentId: user.studentId,
+          major: user.major,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          if (error.code === 'P2025')
+            throw new NotFoundException('User uuid is not found');
+          throw new InternalServerErrorException('Database error');
+        }
+        throw new InternalServerErrorException('Internal server error');
+      });
   }
 
   async deleteUser(uuid: string): Promise<UserDto> {
@@ -52,10 +61,12 @@ export class UserService {
         where: { uuid: uuid },
       })
       .catch((error) => {
-        if (error instanceof Prisma.PrismaClientKnownRequestError)
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
           if (error.code === 'P2025')
-            throw new NotFoundException('User Not Found');
-        throw new InternalServerErrorException();
+            throw new NotFoundException('User uuid is not found');
+          throw new InternalServerErrorException('Database error');
+        }
+        throw new InternalServerErrorException('Internal serval error');
       });
   }
 }
