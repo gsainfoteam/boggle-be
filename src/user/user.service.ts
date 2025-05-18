@@ -7,6 +7,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { UserDto } from 'src/auth/dto/user.dto';
 import { plainToInstance } from 'class-transformer';
+import { updateUserDto } from './dto/updateUser.to';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
@@ -30,19 +32,14 @@ export class UserService {
     return plainToInstance(UserDto, user);
   }
 
-  async updateUser(uuid: string, user: UserDto) {
+  async updateUser(uuid: string, { password }: updateUserDto) {
     return await this.prisma.user
       .update({
         where: {
           uuid: uuid,
         },
         data: {
-          uuid: user.uuid,
-          name: user.name,
-          email: user.email,
-          password: user.password,
-          studentId: user.studentId,
-          major: user.major,
+          password: await bcrypt.hash(password, 10),
         },
       })
       .catch((error) => {
