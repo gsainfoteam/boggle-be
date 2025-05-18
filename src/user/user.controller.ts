@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
@@ -18,50 +19,59 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { UserDto } from 'src/auth/dto/user.dto';
-import { uidDto } from './dto/uid.dto';
+import { uuidDto } from './dto/uuid.dto';
 import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get(':uid')
+  @Get(':uuid')
   @ApiOperation({ summary: 'Get user', description: 'Get user by ID' })
-  @ApiParam({ name: 'uid', type: Number, description: 'user id' })
+  @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
   @ApiOkResponse({ type: UserDto, description: 'Return user information' })
   @ApiNotFoundResponse({ description: 'User Not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
-  async findUser(@Param() { uid }: uidDto): Promise<UserDto> {
-    return this.userService.findUser(uid);
+  async findUser(@Param() { uuid }: uuidDto): Promise<UserDto> {
+    return this.userService.findUser(uuid);
   }
 
-  @Put()
+  @Put(':uuid')
   @ApiOperation({
     summary: 'Update User',
     description: 'Update user information',
   })
+  @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
   @ApiBody({ type: UserDto })
   @ApiOkResponse({ type: UserDto, description: 'Return user information' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  updateUser(@Body() UserDto: UserDto): Promise<UserDto> {
-    return this.userService.updateUser(UserDto);
+  updateUser(
+    @Param() { uuid }: uuidDto,
+    @Body() UserDto: UserDto,
+  ): Promise<UserDto> {
+    return this.userService.updateUser(uuid, UserDto);
   }
 
-  @Delete(':uid')
+  @Delete(':uuid')
   @ApiOperation({
     summary: 'Delete User',
     description: 'Delete user information in db',
   })
-  @ApiParam({ name: 'uid', type: Number, description: 'user id' })
-  @ApiOkResponse({ type: uidDto, description: 'User deleted successfully' })
+  @ApiParam({ name: 'uuid', type: String, description: 'UUid of a user' })
+  @ApiOkResponse({
+    type: uuidDto,
+    description: 'Return deleted user information',
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  deleteUser(@Param() { uid }: uidDto) {
-    return this.userService.deleteUser(uid);
+  deleteUser(@Param() { uuid }: uuidDto): Promise<UserDto> {
+    return this.userService.deleteUser(uuid);
   }
 }

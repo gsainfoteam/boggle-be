@@ -11,6 +11,7 @@ async function bootstrap() {
     .setDescription('boggle be')
     .setVersion('1.0')
     .addTag('infoteam')
+    .addBearerAuth()
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);

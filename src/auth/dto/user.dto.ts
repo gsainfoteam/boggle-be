@@ -1,12 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
 
 export class UserDto {
-  @IsNumber()
-  @Transform(({ value }) => Number(value))
-  @ApiProperty({ example: '1' })
-  readonly uid: number;
+  @IsString()
+  @ApiProperty({ example: '2d87779b-7632-4163-afa0-5062d83e325b' })
+  readonly uuid: string;
 
   @IsString()
   @ApiProperty({ example: '홍길동' })
@@ -21,7 +19,6 @@ export class UserDto {
   readonly password: string;
 
   @IsNumber()
-  @Transform(({ value }) => Number(value))
   @ApiProperty({ example: '20250000' })
   readonly studentId: number;
 

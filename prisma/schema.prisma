@@ -13,13 +13,12 @@
     url      = env("DATABASE_URL")
   }
 
-  enum ActivityType{
+  enum PostType{
     STUDY
-    FOOTBALL
-    BASKETBALL
-    MOVIE
-    MEETING
-    EAT
+    HOBBY
+    PROJECT
+    DELIVERY
+    ROOMMATE
   }
 
   enum PostStatus{
@@ -28,13 +27,16 @@
   }
 
   model User {
-    uid             Int @id @default(autoincrement())
+    uuid            String @id @default(uuid())
+
+
     email           String  @unique
     password        String
 
     name            String
     studentId       Int
     major           String 
+
     refreshToken    String?
     
     posts           Post[]   @relation("UserPosts")
@@ -42,19 +44,21 @@
   }
 
   model Post {
-    id              Int @id @default(autoincrement())
-    author          User @relation("UserPosts", fields: [authorId], references: [uid])
-    authorId        Int
+    uuid            String @id @default(uuid())
 
-    participants    User[]  @relation("PostParticipants")
-
-    activityType    ActivityType
     title           String
     content         String 
-    maxParticipants Int
-    deadline        DateTime
-    status          PostStatus  @default(OPEN)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    postType        PostType 
+
+    author          User @relation("UserPosts", fields: [authorId], references: [uuid])
+    authorId        String
+
+    participants    User[]  @relation("PostParticipants")
+    maxParticipants Int
+
+    createdAt       DateTime  @default(now())
+    deadline        DateTime
+
+    status          PostStatus  @default(OPEN)
   }

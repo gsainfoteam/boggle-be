@@ -12,11 +12,11 @@ import { plainToInstance } from 'class-transformer';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findUser(uid: number): Promise<UserDto> {
+  async findUser(uuid: string): Promise<UserDto> {
     const user = await this.prisma.user.findUnique({
-      where: { uid: uid },
+      where: { uuid: uuid },
       select: {
-        uid: true,
+        uuid: true,
         name: true,
         email: true,
         password: true,
@@ -30,13 +30,13 @@ export class UserService {
     return plainToInstance(UserDto, user);
   }
 
-  async updateUser(user: UserDto) {
+  async updateUser(uuid: string, user: UserDto) {
     return await this.prisma.user.update({
       where: {
-        uid: user.uid,
+        uuid: uuid,
       },
       data: {
-        uid: user.uid,
+        uuid: user.uuid,
         name: user.name,
         email: user.email,
         password: user.password,
@@ -46,10 +46,10 @@ export class UserService {
     });
   }
 
-  async deleteUser(uid: number): Promise<UserDto> {
+  async deleteUser(uuid: string): Promise<UserDto> {
     return await this.prisma.user
       .delete({
-        where: { uid: uid },
+        where: { uuid: uuid },
       })
       .catch((error) => {
         if (error instanceof Prisma.PrismaClientKnownRequestError)
