@@ -61,7 +61,7 @@ export class UserController {
     summary: 'Delete User',
     description: 'Delete user information in db',
   })
-  @ApiParam({ name: 'uuid', type: String, description: 'UUid of a user' })
+  @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
   @ApiOkResponse({
     type: uuidDto,
     description: 'Return deleted user information',
