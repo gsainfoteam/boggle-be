@@ -7,6 +7,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
+import { UpdatePostDto } from './dto/updatePost.dto';
 
 @Injectable()
 export class PostRepository {
@@ -34,7 +35,7 @@ export class PostRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025') {
-            throw new NotFoundException('Post Not found');
+            throw new NotFoundException('Post uuid is not found');
           }
           throw new InternalServerErrorException('Database Error');
         }
@@ -65,8 +66,31 @@ export class PostRepository {
       })
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException('Database Error');
+        }
+        throw new InternalServerErrorException('Internal Server Error');
+      });
+  }
+
+  async updatePost(
+    uuid: string,
+    { title, content, type, maxParticipants, deadline }: UpdatePostDto,
+  ) {
+    return await this.prisma.post
+      .update({
+        where: { uuid: uuid },
+        data: {
+          title: title,
+          content: content,
+          postType: type,
+          maxParticipants: maxParticipants,
+          deadline: deadline,
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025') {
-            throw new NotFoundException('User uuid is not found');
+            throw new NotFoundException('Post uuid is not found');
           }
           throw new InternalServerErrorException('Database Error');
         }

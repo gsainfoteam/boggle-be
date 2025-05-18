@@ -1,9 +1,16 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostIdDto } from './dto/postId.dto';
 import { PostDto } from './dto/post.dto';
 import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
-import { CreatePostDto } from './dto/createPost.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -14,6 +21,7 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { UpdatePostDto } from './dto/updatePost.dto';
 
 @Controller('post')
 export class PostController {
@@ -40,7 +48,7 @@ export class PostController {
     summary: 'Create Post',
     description: 'Create post',
   })
-  @ApiBody({ type: CreatePostDto })
+  @ApiBody({ type: PostDto })
   @ApiOkResponse({
     type: PostDto,
     description: 'Return information of a created post',
@@ -50,7 +58,30 @@ export class PostController {
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async createPost(@Body() postDto: CreatePostDto): Promise<PostDto> {
+  async createPost(@Body() postDto: PostDto): Promise<PostDto> {
     return await this.postService.createPost(postDto);
+  }
+
+  @Put(':uuid')
+  @ApiOperation({
+    summary: 'Update Post',
+    description: 'Update post',
+  })
+  @ApiParam({ name: 'uuid', type: String })
+  @ApiBody({ type: UpdatePostDto })
+  @ApiOkResponse({
+    type: PostDto,
+    description: 'Return information of a updated post',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiNotFoundResponse({ description: 'User uid is not found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async updatePost(
+    @Param() { uuid }: PostIdDto,
+    @Body() postDto: UpdatePostDto,
+  ): Promise<PostDto> {
+    return await this.postService.updatePost(uuid, postDto);
   }
 }
