@@ -3,6 +3,7 @@ import { PostRepository } from './post.repository';
 import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
 import { UpdatePostDto } from './dto/updatePost.dto';
+import { PostFullContent } from './types/postFullContent';
 
 @Injectable()
 export class PostService {
@@ -11,6 +12,7 @@ export class PostService {
   async getPost(uuid: string): Promise<PostDto> {
     const post = await this.postRepository.getPost(uuid);
     return {
+      uuid: post.uuid,
       title: post.title,
       content: post.content,
       type: post.postType,
@@ -31,5 +33,9 @@ export class PostService {
   async updatePost(uuid: string, postDto: UpdatePostDto): Promise<PostDto> {
     await this.postRepository.updatePost(uuid, postDto);
     return this.getPost(uuid);
+  }
+
+  async deletePost(uuid: string): Promise<PostFullContent> {
+    return await this.postRepository.deletePost(uuid);
   }
 }

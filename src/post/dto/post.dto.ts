@@ -5,6 +5,10 @@ import { PostType } from '@prisma/client';
 
 export class PostDto {
   @IsString()
+  @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
+  readonly uuid: string;
+
+  @IsString()
   @ApiProperty({ example: 'this is title' })
   readonly title: string;
 

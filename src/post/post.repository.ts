@@ -97,4 +97,33 @@ export class PostRepository {
         throw new InternalServerErrorException('Internal Server Error');
       });
   }
+
+  async deletePost(uuid: string): Promise<PostFullContent> {
+    return await this.prisma.post
+      .delete({
+        where: { uuid: uuid },
+        include: {
+          author: {
+            select: {
+              uuid: true,
+              name: true,
+            },
+          },
+          participants: {
+            select: {
+              uuid: true,
+              name: true,
+            },
+          },
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          if (error.code === 'P2025')
+            throw new NotFoundException('Post uuid is not found');
+          throw new InternalServerErrorException('Database error');
+        }
+        throw new InternalServerErrorException('Internal serval error');
+      });
+  }
 }
