@@ -4,8 +4,8 @@ import {
   Body,
   Param,
   Delete,
-  Put,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -21,6 +21,7 @@ import {
 import { UserDto } from 'src/auth/dto/user.dto';
 import { uuidDto } from './dto/uuid.dto';
 import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
+import { updateUserDto } from './dto/updateUser.to';
 
 @Controller('user')
 export class UserController {
@@ -36,13 +37,13 @@ export class UserController {
     return this.userService.findUser(uuid);
   }
 
-  @Put(':uuid')
+  @Patch(':uuid')
   @ApiOperation({
     summary: 'Update User',
     description: 'Update user information',
   })
   @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
-  @ApiBody({ type: UserDto })
+  @ApiBody({ type: updateUserDto })
   @ApiOkResponse({ type: UserDto, description: 'Return user information' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
   @ApiNotFoundResponse({ description: 'User not found' })
@@ -51,7 +52,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   updateUser(
     @Param() { uuid }: uuidDto,
-    @Body() UserDto: UserDto,
+    @Body() UserDto: updateUserDto,
   ): Promise<UserDto> {
     return this.userService.updateUser(uuid, UserDto);
   }
@@ -61,7 +62,7 @@ export class UserController {
     summary: 'Delete User',
     description: 'Delete user information in db',
   })
-  @ApiParam({ name: 'uuid', type: String, description: 'UUid of a user' })
+  @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
   @ApiOkResponse({
     type: uuidDto,
     description: 'Return deleted user information',
