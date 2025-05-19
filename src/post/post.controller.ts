@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { PostService } from './post.service';
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -28,6 +30,7 @@ import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListQueryDto } from './dto/postListQuery.dto';
 import { PostListDto } from './dto/postList.dto';
+import { PayloadDto } from 'src/auth/dto/payload.dto';
 
 @Controller('post')
 export class PostController {
@@ -95,6 +98,7 @@ export class PostController {
     description: 'Return information of a updated post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
   @ApiNotFoundResponse({ description: 'Post uuid is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
@@ -102,8 +106,9 @@ export class PostController {
   async updatePost(
     @Param() { uuid }: PostIdDto,
     @Body() postDto: UpdatePostDto,
+    @Request() req: Request & { user: PayloadDto },
   ): Promise<PostDto> {
-    return await this.postService.updatePost(uuid, postDto);
+    return await this.postService.updatePost(uuid, postDto, req.user);
   }
 
   @Delete(':uuid')
@@ -117,11 +122,15 @@ export class PostController {
     description: 'Return information of a deleted post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
   @ApiNotFoundResponse({ description: 'Post uuid is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async deletePost(@Param() { uuid }: PostIdDto): Promise<PostFullContent> {
-    return await this.postService.deletePost(uuid);
+  async deletePost(
+    @Param() { uuid }: PostIdDto,
+    @Request() req: Request & { user: PayloadDto },
+  ): Promise<PostFullContent> {
+    return await this.postService.deletePost(uuid, req.user);
   }
 }
