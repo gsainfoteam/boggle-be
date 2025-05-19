@@ -44,7 +44,7 @@ export class PostController {
   })
   @ApiNotFoundResponse({ description: 'Post uuid is Not Found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
-  async getPostList(@Query() query: PostListQueryDto): Promise<PostListDto[]> {
+  async getPostList(@Query() query: PostListQueryDto): Promise<PostListDto> {
     return await this.postService.getPostList(query);
   }
 

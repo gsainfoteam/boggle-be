@@ -19,14 +19,19 @@ export class PostRepository {
       skip: skip,
       take: take,
       orderBy: { createdAt: 'asc' },
-      select: {
-        uuid: true,
-        title: true,
-        content: true,
-        postType: true,
-        _count: { select: { participants: true } },
-        maxParticipants: true,
-        deadline: true,
+      include: {
+        author: {
+          select: {
+            uuid: true,
+            name: true,
+          },
+        },
+        participants: {
+          select: {
+            uuid: true,
+            name: true,
+          },
+        },
       },
     });
   }
@@ -143,5 +148,9 @@ export class PostRepository {
         }
         throw new InternalServerErrorException('Internal serval error');
       });
+  }
+
+  async getCount(): Promise<number> {
+    return await this.prisma.post.count();
   }
 }

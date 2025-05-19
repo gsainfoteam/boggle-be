@@ -11,19 +11,23 @@ import { PostListDto } from './dto/postList.dto';
 export class PostService {
   constructor(private readonly postRepository: PostRepository) {}
 
-  async getPostList(query: PostListQueryDto): Promise<PostListDto[]> {
+  async getPostList(query: PostListQueryDto): Promise<PostListDto> {
     const posts = (await this.postRepository.getPostList(query)).map((post) => {
       return {
         uuid: post.uuid,
         title: post.title,
         content: post.content,
         type: post.postType,
-        participants: post._count.participants,
+        author: post.author.name,
+        authorId: post.authorId,
+        participants: post.participants,
         maxParticipants: post.maxParticipants,
+        createdAt: post.createdAt,
         deadline: post.deadline,
       };
     });
-    return posts;
+    const total = await this.postRepository.getCount();
+    return { posts: posts, total: total };
   }
 
   async getPost(uuid: string): Promise<PostDto> {
