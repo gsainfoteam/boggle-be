@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { PostService } from './post.service';
@@ -25,10 +26,27 @@ import {
 import { UpdatePostDto } from './dto/updatePost.dto';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
+import { PostListQueryDto } from './dto/postListQuery.dto';
+import { PostListDto } from './dto/postList.dto';
 
 @Controller('post')
 export class PostController {
   constructor(private readonly postService: PostService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get list of post',
+    description: 'Get list of post using cursor and take',
+  })
+  @ApiOkResponse({
+    type: PostDto,
+    description: 'Return information of a post',
+  })
+  @ApiNotFoundResponse({ description: 'Post uuid is Not Found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  async getPostList(@Query() query: PostListQueryDto): Promise<PostListDto[]> {
+    return await this.postService.getPostList(query);
+  }
 
   @Get(':uuid')
   @ApiOperation({

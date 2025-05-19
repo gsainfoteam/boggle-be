@@ -8,10 +8,28 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
 import { UpdatePostDto } from './dto/updatePost.dto';
+import { PostListQueryDto } from './dto/postListQuery.dto';
 
 @Injectable()
 export class PostRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getPostList({ skip, take }: PostListQueryDto) {
+    return await this.prisma.post.findMany({
+      skip: skip,
+      take: take,
+      orderBy: { createdAt: 'asc' },
+      select: {
+        uuid: true,
+        title: true,
+        content: true,
+        postType: true,
+        _count: { select: { participants: true } },
+        maxParticipants: true,
+        deadline: true,
+      },
+    });
+  }
 
   async getPost(uuid: string): Promise<PostFullContent> {
     return await this.prisma.post

@@ -4,10 +4,27 @@ import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
 import { UpdatePostDto } from './dto/updatePost.dto';
 import { PostFullContent } from './types/postFullContent';
+import { PostListQueryDto } from './dto/postListQuery.dto';
+import { PostListDto } from './dto/postList.dto';
 
 @Injectable()
 export class PostService {
   constructor(private readonly postRepository: PostRepository) {}
+
+  async getPostList(query: PostListQueryDto): Promise<PostListDto[]> {
+    const posts = (await this.postRepository.getPostList(query)).map((post) => {
+      return {
+        uuid: post.uuid,
+        title: post.title,
+        content: post.content,
+        type: post.postType,
+        participants: post._count.participants,
+        maxParticipants: post.maxParticipants,
+        deadline: post.deadline,
+      };
+    });
+    return posts;
+  }
 
   async getPost(uuid: string): Promise<PostDto> {
     const post = await this.postRepository.getPost(uuid);
