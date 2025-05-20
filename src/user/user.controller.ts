@@ -21,7 +21,7 @@ import {
 import { UserDto } from 'src/auth/dto/user.dto';
 import { uuidDto } from './dto/uuid.dto';
 import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
-import { updateUserDto } from './dto/updateUser.to';
+import { UpdateUserDto } from './dto/updateUser.dto';
 
 @Controller('user')
 export class UserController {
@@ -43,7 +43,7 @@ export class UserController {
     description: 'Update user information',
   })
   @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
-  @ApiBody({ type: updateUserDto })
+  @ApiBody({ type: UpdateUserDto })
   @ApiOkResponse({ type: UserDto, description: 'Return user information' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
   @ApiNotFoundResponse({ description: 'User not found' })
@@ -52,7 +52,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   updateUser(
     @Param() { uuid }: uuidDto,
-    @Body() UserDto: updateUserDto,
+    @Body() UserDto: UpdateUserDto,
   ): Promise<UserDto> {
     return this.userService.updateUser(uuid, UserDto);
   }

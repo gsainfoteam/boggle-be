@@ -34,7 +34,7 @@ import { PayloadDto } from 'src/auth/dto/payload.dto';
 
 @Controller('post')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(private readonly postService: PostService) { }
 
   @Get()
   @ApiOperation({
