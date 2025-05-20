@@ -21,7 +21,7 @@ export class CreatePostDto {
   readonly authorId: string;
 
   @IsNumber()
-  @ApiProperty({ example: '5' })
+  @ApiProperty({ example: 5 })
   readonly maxParticipants: number;
 
   @IsDate()

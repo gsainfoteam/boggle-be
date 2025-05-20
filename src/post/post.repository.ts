@@ -8,10 +8,33 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
 import { UpdatePostDto } from './dto/updatePost.dto';
+import { PostListQueryDto } from './dto/postListQuery.dto';
 
 @Injectable()
 export class PostRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getPostList({ skip, take }: PostListQueryDto) {
+    return await this.prisma.post.findMany({
+      skip: skip,
+      take: take,
+      orderBy: { createdAt: 'asc' },
+      include: {
+        author: {
+          select: {
+            uuid: true,
+            name: true,
+          },
+        },
+        participants: {
+          select: {
+            uuid: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
 
   async getPost(uuid: string): Promise<PostFullContent> {
     return await this.prisma.post
@@ -125,5 +148,9 @@ export class PostRepository {
         }
         throw new InternalServerErrorException('Internal serval error');
       });
+  }
+
+  async getCount(): Promise<number> {
+    return await this.prisma.post.count();
   }
 }

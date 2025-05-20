@@ -17,7 +17,7 @@ export class UpdatePostDto {
   readonly type: PostType;
 
   @IsNumber()
-  @ApiProperty({ example: '5' })
+  @ApiProperty({ example: 5 })
   readonly maxParticipants: number;
 
   @IsDate()

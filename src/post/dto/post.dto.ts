@@ -33,7 +33,7 @@ export class PostDto {
   readonly participants: participantDto[];
 
   @IsNumber()
-  @ApiProperty({ example: '5' })
+  @ApiProperty({ example: 5 })
   readonly maxParticipants: number;
 
   @IsString()

@@ -6,6 +6,8 @@ import {
   Param,
   Post,
   Put,
+  Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { PostService } from './post.service';
@@ -15,6 +17,7 @@ import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -25,10 +28,28 @@ import {
 import { UpdatePostDto } from './dto/updatePost.dto';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
+import { PostListQueryDto } from './dto/postListQuery.dto';
+import { PostListDto } from './dto/postList.dto';
+import { PayloadDto } from 'src/auth/dto/payload.dto';
 
 @Controller('post')
 export class PostController {
   constructor(private readonly postService: PostService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get list of post',
+    description: 'Get list of post using cursor and take',
+  })
+  @ApiOkResponse({
+    type: PostDto,
+    description: 'Return information of a post',
+  })
+  @ApiNotFoundResponse({ description: 'Post uuid is Not Found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  async getPostList(@Query() query: PostListQueryDto): Promise<PostListDto> {
+    return await this.postService.getPostList(query);
+  }
 
   @Get(':uuid')
   @ApiOperation({
@@ -77,6 +98,7 @@ export class PostController {
     description: 'Return information of a updated post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
   @ApiNotFoundResponse({ description: 'Post uuid is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
@@ -84,8 +106,9 @@ export class PostController {
   async updatePost(
     @Param() { uuid }: PostIdDto,
     @Body() postDto: UpdatePostDto,
+    @Request() req: Request & { user: PayloadDto },
   ): Promise<PostDto> {
-    return await this.postService.updatePost(uuid, postDto);
+    return await this.postService.updatePost(uuid, postDto, req.user);
   }
 
   @Delete(':uuid')
@@ -99,11 +122,15 @@ export class PostController {
     description: 'Return information of a deleted post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
   @ApiNotFoundResponse({ description: 'Post uuid is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async deletePost(@Param() { uuid }: PostIdDto): Promise<PostFullContent> {
-    return await this.postService.deletePost(uuid);
+  async deletePost(
+    @Param() { uuid }: PostIdDto,
+    @Request() req: Request & { user: PayloadDto },
+  ): Promise<PostFullContent> {
+    return await this.postService.deletePost(uuid, req.user);
   }
 }
