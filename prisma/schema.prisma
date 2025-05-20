@@ -29,7 +29,6 @@
   model User {
     uuid            String @id @default(uuid())
 
-
     email           String  @unique
     password        String
 

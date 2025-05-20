@@ -2,7 +2,7 @@ import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage
 import { Server, Socket } from "socket.io";
 
 
-@WebSocketGateway(3002, {})
+@WebSocketGateway(3002, {cors: {origin: '*'}}) 
 
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer() server: Server;
