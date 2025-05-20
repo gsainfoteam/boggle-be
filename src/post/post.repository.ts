@@ -14,7 +14,10 @@ import { PostListQueryDto } from './dto/postListQuery.dto';
 export class PostRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getPostList({ skip, take }: PostListQueryDto) {
+  async getPostList({
+    skip,
+    take,
+  }: PostListQueryDto): Promise<PostFullContent[]> {
     return await this.prisma.post.findMany({
       skip: skip,
       take: take,
