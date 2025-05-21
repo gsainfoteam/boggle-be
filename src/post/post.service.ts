@@ -65,6 +65,11 @@ export class PostService {
     return this.getPost(uuid);
   }
 
+  async joinPost(uuid: string, user: PayloadDto) {
+    await this.postRepository.joinPost(uuid, user.uuid);
+    return this.getPost(uuid);
+  }
+
   async deletePost(uuid: string, user: PayloadDto): Promise<PostFullContent> {
     const authorId = (await this.postRepository.getPost(uuid)).authorId;
     if (authorId !== user.uuid)

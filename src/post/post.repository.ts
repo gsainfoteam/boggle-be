@@ -124,6 +124,29 @@ export class PostRepository {
       });
   }
 
+  async joinPost(uuid: string, user: string) {
+    return await this.prisma.post
+      .update({
+        where: {
+          uuid: uuid,
+        },
+        data: {
+          participants: {
+            connect: { uuid: user },
+          },
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          if (error.code === 'P2025') {
+            throw new NotFoundException('Post uuid is not found');
+          }
+          throw new InternalServerErrorException('Database Error');
+        }
+        throw new InternalServerErrorException('Internal Server Error');
+      });
+  }
+
   async deletePost(uuid: string): Promise<PostFullContent> {
     return await this.prisma.post
       .delete({
