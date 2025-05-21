@@ -134,6 +134,31 @@ export class PostController {
     return await this.postService.joinPost(uuid, req.user);
   }
 
+  @Patch(':postUuid/participant/:userUuid')
+  @ApiOperation({
+    summary: 'Delete Post',
+    description: 'Delete post',
+  })
+  @ApiParam({ name: 'postUuid', type: String })
+  @ApiParam({ name: 'userUuid', type: String })
+  @ApiOkResponse({
+    type: PostDto,
+    description: 'Return information of a deleted post',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
+  @ApiNotFoundResponse({ description: 'Post uuid is not found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async deleteUser(
+    @Param('postUuid') post: string,
+    @Param('userUuid') user: string,
+    @Request() req: Request & { user: PayloadDto },
+  ): Promise<PostDto> {
+    return await this.postService.deleteUser(post, user, req.user);
+  }
+
   @Delete(':uuid')
   @ApiOperation({
     summary: 'Delete Post',

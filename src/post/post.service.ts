@@ -65,9 +65,21 @@ export class PostService {
     return this.getPost(uuid);
   }
 
-  async joinPost(uuid: string, user: PayloadDto) {
+  async joinPost(uuid: string, user: PayloadDto): Promise<PostDto> {
     await this.postRepository.joinPost(uuid, user.uuid);
     return this.getPost(uuid);
+  }
+
+  async deleteUser(
+    postUuid: string,
+    userUuid: string,
+    user: PayloadDto,
+  ): Promise<PostDto> {
+    const post = await this.getPost(postUuid);
+    if (user.uuid !== post.authorId && user.uuid !== userUuid)
+      throw new ForbiddenException('Forbidden Access');
+    await this.postRepository.deleteUser(postUuid, userUuid);
+    return await this.getPost(postUuid);
   }
 
   async deletePost(uuid: string, user: PayloadDto): Promise<PostFullContent> {
