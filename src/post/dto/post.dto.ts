@@ -36,7 +36,7 @@ export class PostDto {
   @ApiProperty({ example: 5 })
   readonly maxParticipants: number;
 
-  @IsString()
+  @IsDate()
   @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
   readonly createdAt: Date;
 
