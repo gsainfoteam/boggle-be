@@ -42,7 +42,7 @@ export class PostController {
     description: 'Get list of post using cursor and take',
   })
   @ApiOkResponse({
-    type: PostDto,
+    type: PostListDto,
     description: 'Return information of a post',
   })
   @ApiNotFoundResponse({ description: 'Post uuid is Not Found' })
