@@ -35,11 +35,14 @@
     name            String
     studentId       Int
     major           String 
+    connectedUser   ConnectedUser?  @relation("ChatUser")
 
     refreshToken    String?
     
     posts           Post[]   @relation("UserPosts")
     joinedPosts     Post[]   @relation("PostParticipants")
+    joinedRooms     Room[]   @relation("RoomMembers")
+    hostedRooms     Room[]   @relation("RoomHost")
   }
 
   model Post {
@@ -60,4 +63,38 @@
     deadline        DateTime
 
     status          PostStatus  @default(OPEN)
+  }
+
+  model ConnectedUser{
+    uuid      String  @id @default(uuid())
+
+    user      User    @relation("ChatUser", fields: [userId], references: [uuid])
+    userId    String  @unique
+
+    socketId  String @unique
+    joinedAt  DateTime   @default(now())
+    messages  Message[]  @relation("UserMessages")
+  }
+
+  model Message{
+    uuid           String @id @default(uuid())
+
+    content        String
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
+
+    sender         ConnectedUser @relation("UserMessages", fields: [senderId], references: [uuid])
+    senderId       String
+    room           Room       @relation("RoomMessages", fields: [roomId], references: [uuid])
+    roomId         String
+  }
+
+  model Room{
+    uuid          String @id @default(uuid())
+
+    host          User   @relation("RoomHost", fields:[hostId], references:[uuid])
+    hostId        String
+
+    members       User[] @relation("RoomMembers")
+    messages      Message[]    @relation("RoomMessages")
   }

@@ -1,6 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsNotEmpty, IsString, IsUUID } from "class-validator";
-import { UserDto } from "src/auth/dto/user.dto";
 
 export class CreateMessageDto {
   @ApiProperty({ required: true })
@@ -8,10 +7,15 @@ export class CreateMessageDto {
   @IsNotEmpty()
   roomId: string;
 
+  @ApiProperty({ required: true, example: 'Hello, this is a message.' })
+  @IsString()
+  @IsNotEmpty()
+  content: string;
+
   @ApiProperty({ required: true })
   @IsString()
   @IsNotEmpty()
-  text: string;
+  senderId: string;
 }
 
 export class DeleteMessageDto {
@@ -30,26 +34,18 @@ export class DeleteMessageDto {
 
 
 export class MessageDto {
-  @ApiProperty({ example: '987fbc97-4bed-5078-9f07-9141ba07c9f3' })
-  id: string;
 
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   roomId: string;
 
   @ApiProperty({ example: 'Hello, this is a message.' })
-  text: string;
-
-  @ApiProperty({ type: UserDto })
-  creator: UserDto;
+  content: string;
 
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
-  createdBy: string;
+  senderId: string;
 
   @ApiProperty({ example: '2023-01-01T00:00:00.000Z' })
   createdAt: Date;
-
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
-  updatedBy: string;
 
   @ApiProperty({ example: '2023-01-02T00:00:00.000Z' })
   updatedAt: Date;
@@ -63,8 +59,8 @@ export class UpdateMessageDto {
   @IsNotEmpty()
   messageId: string;
 
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: true, example: 'Hello, this is a message.' })
   @IsString()
   @IsNotEmpty()
-  text: string;
+  content: string;
 }
