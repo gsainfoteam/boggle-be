@@ -136,8 +136,8 @@ export class PostController {
 
   @Patch(':postUuid/participant/:userUuid')
   @ApiOperation({
-    summary: 'Delete Post',
-    description: 'Delete post',
+    summary: 'Exit Post',
+    description: 'Exit post by user of author',
   })
   @ApiParam({ name: 'postUuid', type: String })
   @ApiParam({ name: 'userUuid', type: String })
