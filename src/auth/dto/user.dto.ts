@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsString } from 'class-validator';
+import { PostDto } from 'src/post/dto/post.dto';
 
 export class UserDto {
   @IsString()
@@ -25,4 +26,8 @@ export class UserDto {
   @IsString()
   @ApiProperty({ example: '전자전기컴퓨터공학부' })
   readonly major: string;
+
+  @IsArray()
+  @ApiProperty({ type: [PostDto] })
+  readonly posts: PostDto[];
 }

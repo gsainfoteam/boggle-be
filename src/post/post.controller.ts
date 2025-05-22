@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -109,6 +110,53 @@ export class PostController {
     @Request() req: Request & { user: PayloadDto },
   ): Promise<PostDto> {
     return await this.postService.updatePost(uuid, postDto, req.user);
+  }
+
+  @Patch(':uuid')
+  @ApiOperation({
+    summary: 'Join Post',
+    description: 'User Join Post',
+  })
+  @ApiParam({ name: 'uuid', type: String })
+  @ApiOkResponse({
+    type: PostDto,
+    description: 'Return information of a updated post',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiNotFoundResponse({ description: 'Post uuid is not found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async joinPost(
+    @Param() { uuid }: PostIdDto,
+    @Request() req: Request & { user: PayloadDto },
+  ): Promise<PostDto> {
+    return await this.postService.joinPost(uuid, req.user);
+  }
+
+  @Patch(':postUuid/participant/:userUuid')
+  @ApiOperation({
+    summary: 'Exit Post',
+    description: 'Exit post by user of author',
+  })
+  @ApiParam({ name: 'postUuid', type: String })
+  @ApiParam({ name: 'userUuid', type: String })
+  @ApiOkResponse({
+    type: PostDto,
+    description: 'Return information of a deleted post',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
+  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
+  @ApiNotFoundResponse({ description: 'Post uuid is not found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async deleteUser(
+    @Param('postUuid') post: string,
+    @Param('userUuid') user: string,
+    @Request() req: Request & { user: PayloadDto },
+  ): Promise<PostDto> {
+    return await this.postService.deleteUser(post, user, req.user);
   }
 
   @Delete(':uuid')
