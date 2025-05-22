@@ -73,6 +73,7 @@ export class PostRepository {
     title,
     content,
     type,
+    tags,
     authorId,
     maxParticipants,
     deadline,
@@ -83,6 +84,7 @@ export class PostRepository {
           title: title,
           content: content,
           postType: type,
+          tags: tags,
           author: { connect: { uuid: authorId } },
           participants: { connect: [{ uuid: authorId }] },
           maxParticipants: maxParticipants,
@@ -100,7 +102,7 @@ export class PostRepository {
 
   async updatePost(
     uuid: string,
-    { title, content, type, maxParticipants, deadline }: UpdatePostDto,
+    { title, content, type, tags, maxParticipants, deadline }: UpdatePostDto,
   ) {
     return await this.prisma.post
       .update({
@@ -109,6 +111,7 @@ export class PostRepository {
           title: title,
           content: content,
           postType: type,
+          tags: tags,
           maxParticipants: maxParticipants,
           deadline: deadline,
         },

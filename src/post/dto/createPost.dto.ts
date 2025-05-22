@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PostType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDate, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsDate, IsNumber, IsString } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -15,6 +15,10 @@ export class CreatePostDto {
   @IsString()
   @ApiProperty({ example: 'PROJECT' })
   readonly type: PostType;
+
+  @IsArray()
+  @ApiProperty({ example: ['abc', 'def'] })
+  readonly tags: string[];
 
   @IsString()
   @ApiProperty({ example: '2d87779b-7632-4163-afa0-5062d83e325b' })

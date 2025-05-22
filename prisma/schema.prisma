@@ -50,6 +50,7 @@
     content         String 
 
     postType        PostType 
+    tags            String[]
 
     author          User @relation("UserPosts", fields: [authorId], references: [uuid])
     authorId        String
