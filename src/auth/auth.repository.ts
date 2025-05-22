@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
-import { UserDto } from './dto/user.dto';
 import { PayloadDto } from './dto/payload.dto';
 import { LoginDto } from './dto/login.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -16,7 +15,7 @@ export class AuthRepository {
   private readonly logger = new Logger(AuthRepository.name);
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOrCreateUser(body: LoginDto): Promise<UserDto> {
+  async findOrCreateUser(body: LoginDto) {
     return await this.prisma.user
       .findFirst({ where: { email: body.email } })
       .then(async (user) => {

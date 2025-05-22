@@ -9,6 +9,7 @@ import { UserDto } from 'src/auth/dto/user.dto';
 import { plainToInstance } from 'class-transformer';
 import * as bcrypt from 'bcryptjs';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { PostDto } from 'src/post/dto/post.dto';
 
 @Injectable()
 export class UserService {
@@ -24,16 +25,28 @@ export class UserService {
         password: true,
         studentId: true,
         major: true,
+        posts: true,
       },
     });
     if (!user) {
       throw new NotFoundException('User uuid is not found');
     }
-    return plainToInstance(UserDto, user);
+    return {
+      uuid: user.uuid,
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      studentId: user.studentId,
+      major: user.major,
+      posts: plainToInstance(PostDto, user.posts),
+    };
   }
 
-  async updateUser(uuid: string, { password }: UpdateUserDto) {
-    return await this.prisma.user
+  async updateUser(
+    uuid: string,
+    { password }: UpdateUserDto,
+  ): Promise<UserDto> {
+    await this.prisma.user
       .update({
         where: {
           uuid: uuid,
@@ -50,10 +63,12 @@ export class UserService {
         }
         throw new InternalServerErrorException('Internal server error');
       });
+
+    return this.findUser(uuid);
   }
 
   async deleteUser(uuid: string): Promise<UserDto> {
-    return await this.prisma.user
+    await this.prisma.user
       .delete({
         where: { uuid: uuid },
       })
@@ -65,5 +80,7 @@ export class UserService {
         }
         throw new InternalServerErrorException('Internal serval error');
       });
+
+    return this.findUser(uuid);
   }
 }
