@@ -17,11 +17,15 @@ export class PostRepository {
   async getPostList({
     skip,
     take,
+    type,
   }: PostListQueryDto): Promise<PostFullContent[]> {
     return await this.prisma.post.findMany({
       skip: skip,
       take: take,
       orderBy: { createdAt: 'asc' },
+      where: {
+        postType: type === 'ALL' ? undefined : type,
+      },
       include: {
         author: {
           select: {
