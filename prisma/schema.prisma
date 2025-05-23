@@ -26,6 +26,11 @@
     CLOSED
   }
 
+  enum RoomType{
+    GROUP
+    PRIVATE
+  }
+
   model User {
     uuid            String @id @default(uuid())
 
@@ -95,6 +100,12 @@
     host          User   @relation("RoomHost", fields:[hostId], references:[uuid])
     hostId        String
 
+    name          String
+    roomType      RoomType
+
     members       User[] @relation("RoomMembers")
     messages      Message[]    @relation("RoomMessages")
+
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
   }

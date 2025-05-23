@@ -1,6 +1,5 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { CreateMessageDto, DeleteMessageDto, MessageDto, UpdateMessageDto } from "../dto/message.dto";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { MessageRepository } from "./message.repository";
 
 @Injectable()

@@ -9,7 +9,7 @@ export class MessageRepository{
 
     async createMessage(
       createMessageDto: CreateMessageDto,
-    ): Promise<MessageDto> {
+    ) {
       return await this.prisma.message.create({
         data: {
           ...createMessageDto,
@@ -23,7 +23,7 @@ export class MessageRepository{
       throw new InternalServerErrorException("Internal Server Error");})
     }
 
-    async getMessage(uuid: string): Promise<MessageDto> {
+    async getMessage(uuid: string){
       return await this.prisma.message.findUniqueOrThrow({
         where: { uuid: uuid },
       }).catch((error) => {
@@ -33,7 +33,7 @@ export class MessageRepository{
         throw new InternalServerErrorException("Internal Server Error");})
     }
     
-    async updateMessage({messageId, content}: UpdateMessageDto): Promise<MessageDto>{
+    async updateMessage({messageId, content}: UpdateMessageDto){
       const message = await this.prisma.message.findUniqueOrThrow({
         where: {uuid: messageId},
       })
@@ -56,7 +56,7 @@ export class MessageRepository{
         }
 
 
-  async deleteMany(userId:string, DeleteMessageDto: DeleteMessageDto ): Promise<void> {
+  async deleteMany(userId:string, DeleteMessageDto: DeleteMessageDto ) {
     for(const id of DeleteMessageDto.messageIds){
       const message = await this.prisma.message.findUnique({
         where: { uuid: id},
@@ -71,6 +71,18 @@ export class MessageRepository{
       try {
         await this.prisma.message.delete({
           where: { uuid: id},
+          include: {
+            sender: {
+              select: {
+                uuid: true,
+              },
+            },
+            room: {
+              select: {
+                uuid: true,
+              },
+            },
+          }
         })
       } catch (error) {
         if (error instanceof PrismaClientKnownRequestError) {
