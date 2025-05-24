@@ -1,0 +1,58 @@
+import { Injectable, Logger } from "@nestjs/common";
+import { WsException } from "@nestjs/websockets";
+import { User } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { PrismaService } from "src/prisma/prisma.service";
+
+@Injectable()
+export class ConnectedUserRepository {
+    private readonly logger = new Logger('ConnectedUserRepository')
+
+    constructor(private prisma: PrismaService) { }
+
+    async create(user: User, socketId: string) {
+        try {
+            return await this.prisma.connectedUser.create({
+                data: {
+                    userId: user.uuid,
+                    socketId: socketId,
+                    joinedAt: new Date()
+                },
+            });
+        } catch (error) {
+            this.logger.error(`Create failed for user ${user.uuid}`, error.stack)
+            if (error instanceof PrismaClientKnownRequestError) {
+                throw new WsException("Database error when creating a connected user");
+            }
+            throw new WsException("Unexpected error when creating a connected user");
+        }
+    }
+
+
+    async delete(socketId: string) {
+        return await this.prisma.connectedUser.delete({
+            where: { socketId: socketId },
+        }).catch((error) => {
+            this.logger.error(`Delete failed for socket ${socketId}`, error.stack)
+            if (error instanceof PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    throw new WsException("User not found")
+                }
+                throw new WsException('Database error when deleting a connected user')
+            }
+            throw new WsException('Unexpected error when deleting a connected user')
+        })
+    }
+
+    async deleteAll() {
+        try {
+            return await this.prisma.connectedUser.deleteMany();
+        } catch (error) {
+            this.logger.error('Delete all failed', error.stack)
+            if (error instanceof PrismaClientKnownRequestError) {
+                throw new WsException("Database error while deleting all connected users");
+            }
+            throw new WsException("Unexpected error when deleting all connected users");
+        }
+    }
+}

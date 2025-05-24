@@ -40,7 +40,7 @@
     name            String
     studentId       Int
     major           String 
-    connectedUser   ConnectedUser?  @relation("ChatUser")
+    connectedUsers   ConnectedUser[]  @relation("ChatUser")
 
     refreshToken    String?
     
@@ -74,9 +74,9 @@
     uuid      String  @id @default(uuid())
 
     user      User    @relation("ChatUser", fields: [userId], references: [uuid])
-    userId    String  @unique
+    userId    String  
 
-    socketId  String @unique
+    socketId  String     @unique
     joinedAt  DateTime   @default(now())
     messages  Message[]  @relation("UserMessages")
   }
