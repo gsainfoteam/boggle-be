@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserStatus } from '@prisma/client';
 import { IsArray, IsNumber, IsString } from 'class-validator';
 import { PostDto } from 'src/post/dto/post.dto';
 
@@ -30,4 +31,8 @@ export class UserDto {
   @IsArray()
   @ApiProperty({ type: [PostDto] })
   readonly posts: PostDto[];
+
+  @IsString()
+  @ApiProperty({ example: 'ACTIVE' })
+  readonly status: UserStatus;
 }

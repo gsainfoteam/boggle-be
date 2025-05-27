@@ -26,6 +26,7 @@ export class UserService {
         studentId: true,
         major: true,
         posts: true,
+        status: true,
       },
     });
     if (!user) {
@@ -39,6 +40,7 @@ export class UserService {
       studentId: user.studentId,
       major: user.major,
       posts: plainToInstance(PostDto, user.posts),
+      status: user.status,
     };
   }
 
@@ -69,8 +71,9 @@ export class UserService {
 
   async deleteUser(uuid: string): Promise<UserDto> {
     await this.prisma.user
-      .delete({
+      .update({
         where: { uuid: uuid },
+        data: { status: 'INACTIVE' },
       })
       .catch((error) => {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {

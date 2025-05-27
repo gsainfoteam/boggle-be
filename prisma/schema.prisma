@@ -21,6 +21,11 @@
     ROOMMATE
   }
 
+  enum UserStatus{
+    ACTIVE
+    INACTIVE
+  }
+
   enum PostStatus{
     OPEN
     CLOSED
@@ -41,6 +46,8 @@
     
     posts           Post[]   @relation("UserPosts")
     joinedPosts     Post[]   @relation("PostParticipants")
+
+    status          UserStatus @default(ACTIVE)
   }
 
   model Post {
