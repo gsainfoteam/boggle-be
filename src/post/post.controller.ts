@@ -82,8 +82,11 @@ export class PostController {
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async createPost(@Body() postDto: CreatePostDto): Promise<PostDto> {
-    return await this.postService.createPost(postDto);
+  async createPost(
+    @Body() postDto: CreatePostDto,
+    @Request() req: Request & { user: PayloadDto },
+  ): Promise<PostDto> {
+    return await this.postService.createPost(postDto, req.user);
   }
 
   @Put(':uuid')

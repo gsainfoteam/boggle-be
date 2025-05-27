@@ -69,14 +69,10 @@ export class PostRepository {
       });
   }
 
-  async createPost({
-    title,
-    content,
-    type,
-    authorId,
-    maxParticipants,
-    deadline,
-  }: CreatePostDto) {
+  async createPost(
+    { title, content, type, maxParticipants, deadline }: CreatePostDto,
+    authorId: string,
+  ) {
     return await this.prisma.post
       .create({
         data: {
