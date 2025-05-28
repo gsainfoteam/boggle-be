@@ -29,6 +29,19 @@ import { PayloadDto } from 'src/auth/dto/payload.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Get self', description: 'Get self by JWT' })
+  @ApiOkResponse({ type: UserDto, description: 'Return user information' })
+  @ApiNotFoundResponse({ description: 'User Not found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async findSelf(
+    @Request() req: Request & { user: PayloadDto },
+  ): Promise<UserDto> {
+    return this.userService.findUser(req.user.uuid);
+  }
+
   @Get(':uuid')
   @ApiOperation({ summary: 'Get user', description: 'Get user by ID' })
   @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
