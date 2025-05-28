@@ -25,7 +25,7 @@ export class UserService {
         password: true,
         studentId: true,
         major: true,
-        posts: true,
+        posts: { include: { participants: true } },
         status: true,
       },
     });
