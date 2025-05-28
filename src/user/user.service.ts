@@ -25,7 +25,20 @@ export class UserService {
         password: true,
         studentId: true,
         major: true,
-        posts: { include: { participants: true } },
+        posts: {
+          select: {
+            uuid: true,
+            title: true,
+            content: true,
+            postType: true,
+            tags: true,
+            authorId: true,
+            participants: true,
+            maxParticipants: true,
+            createdAt: true,
+            deadline: true,
+          },
+        },
         status: true,
       },
     });
