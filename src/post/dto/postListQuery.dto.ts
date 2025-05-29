@@ -8,13 +8,13 @@ export class PostListQueryDto {
   @ApiProperty({ example: 'ALL' })
   readonly type: PostType | 'ALL';
 
-  @IsNumber()
   @Type(() => Number)
+  @IsNumber()
   @ApiProperty({ example: 1 })
   readonly skip: number;
 
-  @IsNumber()
   @Type(() => Number)
+  @IsNumber()
   @ApiProperty({ example: 3 })
   readonly take: number;
 }
