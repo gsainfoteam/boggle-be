@@ -21,6 +21,11 @@
     ROOMMATE
   }
 
+  enum UserStatus{
+    ACTIVE
+    INACTIVE
+  }
+
   enum PostStatus{
     OPEN
     CLOSED
@@ -46,8 +51,12 @@
     
     posts           Post[]   @relation("UserPosts")
     joinedPosts     Post[]   @relation("PostParticipants")
+
     joinedRooms     Room[]   @relation("RoomMembers")
     hostedRooms     Room[]   @relation("RoomHost")
+
+
+    status          UserStatus @default(ACTIVE)
   }
 
   model Post {
@@ -57,6 +66,7 @@
     content         String 
 
     postType        PostType 
+    tags            String[]
 
     author          User @relation("UserPosts", fields: [authorId], references: [uuid])
     authorId        String

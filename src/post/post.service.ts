@@ -19,6 +19,7 @@ export class PostService {
         title: post.title,
         content: post.content,
         type: post.postType,
+        tags: post.tags,
         author: post.author.name,
         authorId: post.authorId,
         participants: post.participants,
@@ -38,6 +39,7 @@ export class PostService {
       title: post.title,
       content: post.content,
       type: post.postType,
+      tags: post.tags,
       author: post.author.name,
       authorId: post.authorId,
       participants: post.participants,
@@ -47,8 +49,8 @@ export class PostService {
     };
   }
 
-  async createPost(postDto: CreatePostDto): Promise<PostDto> {
-    const post = await this.postRepository.createPost(postDto);
+  async createPost(postDto: CreatePostDto, user: PayloadDto): Promise<PostDto> {
+    const post = await this.postRepository.createPost(postDto, user.uuid);
     return this.getPost(post.uuid);
   }
 

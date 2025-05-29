@@ -20,6 +20,10 @@ export class PostDto {
   @ApiProperty({ example: 'type' })
   readonly type: PostType;
 
+  @IsArray()
+  @ApiProperty({ example: ['abc', 'def'] })
+  readonly tags: string[];
+
   @IsString()
   @ApiProperty({ example: 'name of author' })
   readonly author: string;

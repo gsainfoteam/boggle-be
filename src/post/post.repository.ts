@@ -17,11 +17,15 @@ export class PostRepository {
   async getPostList({
     skip,
     take,
+    type,
   }: PostListQueryDto): Promise<PostFullContent[]> {
     return await this.prisma.post.findMany({
       skip: skip,
       take: take,
       orderBy: { createdAt: 'asc' },
+      where: {
+        postType: type === 'ALL' ? undefined : type,
+      },
       include: {
         author: {
           select: {
@@ -69,20 +73,17 @@ export class PostRepository {
       });
   }
 
-  async createPost({
-    title,
-    content,
-    type,
-    authorId,
-    maxParticipants,
-    deadline,
-  }: CreatePostDto) {
+  async createPost(
+    { title, content, type, tags, maxParticipants, deadline }: CreatePostDto,
+    authorId: string,
+  ) {
     return await this.prisma.post
       .create({
         data: {
           title: title,
           content: content,
           postType: type,
+          tags: tags,
           author: { connect: { uuid: authorId } },
           participants: { connect: [{ uuid: authorId }] },
           maxParticipants: maxParticipants,
@@ -100,7 +101,7 @@ export class PostRepository {
 
   async updatePost(
     uuid: string,
-    { title, content, type, maxParticipants, deadline }: UpdatePostDto,
+    { title, content, type, tags, maxParticipants, deadline }: UpdatePostDto,
   ) {
     return await this.prisma.post
       .update({
@@ -109,6 +110,7 @@ export class PostRepository {
           title: title,
           content: content,
           postType: type,
+          tags: tags,
           maxParticipants: maxParticipants,
           deadline: deadline,
         },
