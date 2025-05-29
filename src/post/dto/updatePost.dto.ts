@@ -20,6 +20,7 @@ export class UpdatePostDto {
   @ApiProperty({ example: ['abc', 'def'] })
   readonly tags: string[];
 
+  @Type(() => Number)
   @IsNumber()
   @ApiProperty({ example: 5 })
   readonly maxParticipants: number;
