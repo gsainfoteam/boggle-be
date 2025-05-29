@@ -22,6 +22,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage('newMessage')
     handleNewMessage(client: Socket, message: string) {
-        this.server.emit('newMessage', message); //
+        this.server.emit('newMessage', message); 
     }
 }

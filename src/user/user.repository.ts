@@ -70,8 +70,9 @@ export class UserRepository {
 
   async deleteUser(uuid: string): Promise<UserDto> {
     await this.prisma.user
-      .delete({
+      .update({
         where: { uuid: uuid },
+        data: { status: 'INACTIVE' },
       })
       .catch((error) => {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {

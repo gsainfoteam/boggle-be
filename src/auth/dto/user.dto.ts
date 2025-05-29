@@ -31,8 +31,4 @@ export class UserDto {
   @IsArray()
   @ApiProperty({ type: [PostDto] })
   readonly posts: PostDto[];
-
-  @IsString()
-  @ApiProperty({ example: 'ACTIVE' })
-  readonly status: UserStatus;
 }
