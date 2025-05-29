@@ -1,8 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { WsException } from "@nestjs/websockets";
-import { User } from "@prisma/client";
+import { ConnectedUser } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { PrismaService } from "src/prisma/prisma.service";
+import { UserPayload } from "src/types/user-payload.type";
 
 @Injectable()
 export class ConnectedUserRepository {
@@ -10,24 +11,24 @@ export class ConnectedUserRepository {
 
     constructor(private prisma: PrismaService) { }
 
-    async create(user: User, socketId: string) {
+    async create(userPayload: UserPayload, socketId: string) {
         try {
             return await this.prisma.connectedUser.create({
                 data: {
-                    userId: user.uuid,
+                    userId: userPayload.uuid,
+                    email: userPayload.email,
                     socketId: socketId,
                     joinedAt: new Date()
                 },
             });
         } catch (error) {
-            this.logger.error(`Create failed for user ${user.uuid}`, error.stack)
+            this.logger.error(`Create failed for user ${userPayload.uuid}`, error.stack)
             if (error instanceof PrismaClientKnownRequestError) {
                 throw new WsException("Database error when creating a connected user");
             }
             throw new WsException("Unexpected error when creating a connected user");
         }
     }
-
 
     async delete(socketId: string) {
         return await this.prisma.connectedUser.delete({
@@ -53,6 +54,24 @@ export class ConnectedUserRepository {
                 throw new WsException("Database error while deleting all connected users");
             }
             throw new WsException("Unexpected error when deleting all connected users");
+        }
+    }
+
+    async findByUserIds(userIds: string[]): Promise<ConnectedUser[]> {
+        try {
+            return await this.prisma.connectedUser.findMany({
+                where: {
+                    userId: {
+                        in: userIds, 
+                    },
+                },
+            });
+        } catch (error) {
+            this.logger.error(`Failed to find connected users by UUIDs: ${userIds.join(', ')}`, error.stack);
+            if (error instanceof PrismaClientKnownRequestError) {
+                throw new WsException("Database error when fetching connected users.");
+            }
+            throw new WsException("Unexpected error when fetching connected users.");
         }
     }
 }

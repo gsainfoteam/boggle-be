@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CreateMessageDto, DeleteMessageDto, MessageDto, UpdateMessageDto } from "../dto/message.dto";
 import { MessageRepository } from "./message.repository";
 import { WsException } from "@nestjs/websockets";
+import { Message } from "@prisma/client";
 @Injectable()
 export class MessageService {
   private readonly logger = new Logger("MessageService");
@@ -34,6 +35,22 @@ export class MessageService {
         throw error;
       }
       throw new WsException("Unexpected error when updating message.");
+    }
+  }
+
+  async findByRoomId(roomId: string): Promise<Message[]> {
+    try {
+      const messages = await this.messageRepository.findByRoomId(roomId);
+      if (!messages.length) {
+        throw new WsException('No messages found for this room.');
+      }
+      return messages;
+    } catch (error) {
+      this.logger.error(`Failed to retrieve messages for room ID ${roomId}: ${error.message}`, error.stack);
+      if (error instanceof WsException) {
+        throw error;
+      }
+      throw new WsException('An error occurred while fetching messages.');
     }
   }
 

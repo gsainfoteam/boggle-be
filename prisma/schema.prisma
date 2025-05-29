@@ -57,6 +57,8 @@
 
 
     status          UserStatus @default(ACTIVE)
+
+    @@unique([uuid, email])
   }
 
   model Post {
@@ -83,8 +85,10 @@
   model ConnectedUser{
     uuid      String  @id @default(uuid())
 
-    user      User    @relation("ChatUser", fields: [userId], references: [uuid])
+    user      User    @relation("ChatUser", fields: [userId, email], references: [uuid, email])
     userId    String  
+    email     String
+    
 
     socketId  String     @unique
     joinedAt  DateTime   @default(now())

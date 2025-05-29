@@ -3,6 +3,7 @@ import { AssignUsersDto, CreateRoomDto, UpdateRoomDto } from "../dto/room.dto";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { Injectable, Logger } from "@nestjs/common";
 import { WsException } from "@nestjs/websockets";
+import { Room } from "@prisma/client";
 
 @Injectable()
 export class RoomRepository {
@@ -20,7 +21,7 @@ export class RoomRepository {
                     members: { connect: participantsId.map(id => ({ uuid: id })) },
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                }
+                },
             });
         } catch (error) {
             if (error instanceof PrismaClientKnownRequestError) {
@@ -37,6 +38,9 @@ export class RoomRepository {
             return await this.prisma.room.findUniqueOrThrow({
                 where: {
                     uuid: roomId
+                },
+                include: {
+                    members: true
                 }
             });
         } catch (error) {
@@ -62,6 +66,9 @@ export class RoomRepository {
                         connect: participantsId.map((id) => ({ uuid: id })),
                     },
                     hostId: hostId
+                },
+                include: {
+                    members: true
                 }
             });
         } catch (error) {
@@ -83,6 +90,9 @@ export class RoomRepository {
                 where: {
                     uuid: roomID
                 },
+                include: {
+                    members: true
+                }
             });
         } catch (error) {
             if (error instanceof PrismaClientKnownRequestError) {
@@ -140,6 +150,32 @@ export class RoomRepository {
             }
             this.logger.error(`Unexpected error for user ${userId} leaving room ${roomId}: ${error.message}`, error.stack);
             throw new WsException('Unexpected error when leaving room.');
+        }
+    }
+
+    async findRoomsByUserId(userId: string): Promise<Room[]> {
+        try {
+            return await this.prisma.room.findMany({
+                where: {
+                    members: { 
+                        some: { 
+                            uuid: userId, 
+                        },
+                    },
+                },
+                include: {
+                    members: true,
+                },
+                orderBy: {
+                    updatedAt: 'desc',
+                },
+            });
+        } catch (error) {
+            this.logger.error(`Failed to find rooms for user ${userId}: ${error.message}`, error.stack);
+            if (error instanceof PrismaClientKnownRequestError) {
+                throw new WsException(`Database error when fetching rooms: ${error.message}`);
+            }
+            throw new WsException('Unexpected error when fetching user rooms.');
         }
     }
 

@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsString, IsUUID } from "class-validator";
+import { Type } from "class-transformer";
+import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from "class-validator";
 
 export class CreateMessageDto {
   @ApiProperty({ required: true })
@@ -63,4 +64,29 @@ export class UpdateMessageDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+}
+
+export class FilterMessageDto {
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  first?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  rows?: number;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  filter?: string;
+
+  @ApiProperty({ required: false })
+  @IsUUID()
+  @IsString()
+  @IsNotEmpty()
+  roomId: string;
 }
