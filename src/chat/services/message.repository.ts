@@ -86,32 +86,41 @@ export class MessageRepository {
   }
 
   async deleteMany(userId: string, deleteMessageDto: DeleteMessageDto) {
-    for (const id of deleteMessageDto.messageIds) {
-      try {
-        const message = await this.prisma.message.findUnique({
-          where: { uuid: id },
-        });
+    try{
+      const messages = await this.prisma.message.findMany({
+        where:{
+            uuid: {in: deleteMessageDto.messageIds},
+        },
+      })
 
-        if (!message) {
-          throw new WsException(`Message with ID ${id} not found.`);
-        }
-        if (message.senderId !== userId) {
-          throw new WsException("You can only delete your own messages.");
-        }
-
-        await this.prisma.message.delete({
-          where: { uuid: id },
-        });
-      } catch (error) {
-        this.logger.error(`Failed to delete message with ID: ${id} for user: ${userId}`, error.stack);
-        if (error instanceof WsException) {
-          throw error;
-        }
-        if (error instanceof PrismaClientKnownRequestError) {
-          throw new WsException("Database error when deleting message.");
-        }
-        throw new WsException("Unexpected error when deleting messages.");
+      const notOwnedMessages = messages.filter(msg =>msg.senderId != userId);
+      if(notOwnedMessages.length > 0 ){
+        throw new WsException('You can delete only your own messages.')
       }
+
+      const notFoundIds = deleteMessageDto.messageIds.filter(id => !messages.find(msg => msg.uuid === id));
+      if(notFoundIds.length > 0){
+        throw new WsException(`Messages with IDs: ${notFoundIds.join(', ')}`)
+      }
+
+      const result = await this.prisma.message.deleteMany({
+        where: {
+          uuid: {in: deleteMessageDto.messageIds},
+          senderId: userId,
+        }
+      })
+      this.logger.log(`Deleted messages with IDs: ${deleteMessageDto.messageIds.join(', ')}`);
+      return result;
+    }
+    catch(error){
+      this.logger.error(`Failed to delete messages for user id: ${userId}`, error.stack);
+      if(error instanceof WsException){
+        throw error;
+      }
+      if(error instanceof PrismaClientKnownRequestError){
+        throw new WsException('Database error when deleting messages.');
+      }
+      throw new WsException('Unexpected error when deleting messages.')
     }
   }
 }
