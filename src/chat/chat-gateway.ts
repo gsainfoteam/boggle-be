@@ -16,7 +16,7 @@ import { CreateMessageDto, DeleteMessageDto, FilterMessageDto, UpdateMessageDto 
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
 
 @UseFilters(WsExceptionFilter)
-@WebSocketGateway(4800, { cors: { origin: '*' } })
+@WebSocketGateway(3002, { cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer() server: Server;
     private readonly logger = new Logger('ChatGateway');
