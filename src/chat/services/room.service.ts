@@ -23,11 +23,11 @@ export class RoomService {
         }
     }
 
-    async deleteRoom(uuid: string, user: User): Promise<Room & { members: User[] }> {
+    async deleteRoom(uuid: string, userId: string): Promise<Room & { members: User[] }> {
         try {
             const room = await this.roomRepository.findOne(uuid);
-            if (user.uuid !== room.hostId) {
-                this.logger.warn(`User ${user.uuid} attempted to delete room ${uuid} but is not the host.`);
+            if (userId!== room.hostId) {
+                this.logger.warn(`User ${userId} attempted to delete room ${uuid} but is not the host.`);
                 throw new WsException("Only the host is allowed to delete the room.");
             }
             return await this.roomRepository.delete(uuid);
@@ -35,7 +35,7 @@ export class RoomService {
             if (error instanceof WsException) {
                 throw error;
             }
-            this.logger.error(`Unexpected error while deleting room ${uuid} by user ${user.uuid}: ${error.message}`, error.stack);
+            this.logger.error(`Unexpected error while deleting room ${uuid} by user ${userId}: ${error.message}`, error.stack);
             throw new WsException("Unexpected error while deleting room.");
         }
     }
@@ -66,12 +66,12 @@ export class RoomService {
         }
     }
 
-    async updateRoom(updateRoomDto: UpdateRoomDto, user: User): Promise<Room & { members: User[] }> {
+    async updateRoom(updateRoomDto: UpdateRoomDto, userId: string): Promise<Room & { members: User[] }> {
         try {
             const existingRoom = await this.roomRepository.findOne(updateRoomDto.roomId);
 
-            if (existingRoom.hostId !== user.uuid) {
-                this.logger.warn(`User ${user.uuid} attempted to update room ${updateRoomDto.roomId} but is not the host.`);
+            if (existingRoom.hostId !== userId) {
+                this.logger.warn(`User ${userId} attempted to update room ${updateRoomDto.roomId} but is not the host.`);
                 throw new WsException("Only the host is allowed to update the room.");
             }
 
@@ -80,7 +80,7 @@ export class RoomService {
             if (error instanceof WsException) {
                 throw error;
             }
-            this.logger.error(`Unexpected error when updating room ${updateRoomDto.roomId} by user ${user.uuid}: ${error.message}`, error.stack);
+            this.logger.error(`Unexpected error when updating room ${updateRoomDto.roomId} by user ${userId}: ${error.message}`, error.stack);
             throw new WsException("Unexpected error when updating room.");
         }
     }

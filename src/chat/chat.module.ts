@@ -11,8 +11,10 @@ import { MessageRepository } from './services/message.repository';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 
 @Module({
+    imports: [AuthModule, JwtModule],
     providers: [
         ChatGateway,
+        PrismaService,
         RoomService,
         ConnectedUserService,
         MessageService,

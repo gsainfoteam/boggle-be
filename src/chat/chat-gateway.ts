@@ -137,9 +137,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 );
             }
 
-            const updatedRoom = await this.roomService.updateRoom(updateRoomDto, {
-                uuid: currentUser.uuid,
-            } as User);
+            const updatedRoom = await this.roomService.updateRoom(
+            updateRoomDto, 
+            currentUser.uuid
+             );
 
             await this.notifyRoomParticipants(
                 updatedRoom.members,
@@ -167,9 +168,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { roomId } = deleteRoomDto;
 
         try {
-            const roomToDelete = await this.roomService.deleteRoom(roomId, {
-                uuid: userId,
-            } as User);
+            const roomToDelete = await this.roomService.deleteRoom(roomId, currentUser.uuid);
 
             await this.notifyRoomParticipants(
                 roomToDelete.members.filter(member => member.uuid !== userId),
@@ -473,7 +472,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             const newAccessToken = this.jwtService.sign(
                 { uuid: currentUser.uuid, email: currentUser.email },
-                { secret: process.env.ACCESS_TOKEN_SECRET, expiresIn: '1h' },
+                { secret: process.env.JWT_SECRET, expiresIn: '1h' },
             );
 
             socket.emit('tokenRefreshed', { accessToken: newAccessToken });
