@@ -33,10 +33,18 @@ export class MessageRepository {
 
 
   async findByRoomId(roomId: string): Promise<Message[]> {
+    try{
         return await this.prisma.message.findMany({
             where: { roomId },
             include: { sender: true }, 
-        });
+        });}
+        catch(error){
+          this.logger.error(`Failed to find messages for the room with ID: ${roomId}`, error.stack);
+          if(error instanceof PrismaClientKnownRequestError){
+            throw new WsException('Database error when retrieving messages.')
+          }
+          throw new WsException('Unexpected error when retrieving messages.')
+        }
     }
 
   async getMessage(uuid: string) {

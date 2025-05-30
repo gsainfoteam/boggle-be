@@ -10,15 +10,20 @@ export class ConnectedUserService {
     constructor(private connectedUserRepository: ConnectedUserRepository) { }
 
     async createConnectedUser(userPayload: UserPayload, socketId: string): Promise<ConnectedUser> {
+
+        if(!userPayload.uuid){
+            throw new WsException('User id is required')
+        }
+
         try {
             const newuser = await this.connectedUserRepository.create(userPayload, socketId);
-            if (!newuser.userId) {
-                throw new WsException('User id is not found')
-            }
             return newuser;
         }
         catch (error) {
             this.logger.error('Create failed', error.stack)
+                if(error instanceof WsException){
+                    throw error;
+                }
             throw new WsException('Unexpected error while creating a connected user')
         }
     }

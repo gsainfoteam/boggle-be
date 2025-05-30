@@ -13,7 +13,7 @@ export class MessageService {
     try {
       return await this.messageRepository.createMessage(createMessageDto);
     } catch (error) {
-      this.logger.error(`Failed to create message: ${JSON.stringify(createMessageDto)}`, error.stack);
+      this.logger.error(`Failed to create message: ${createMessageDto.roomId}`, error.stack);
       if (error instanceof WsException) {
         throw error;
       }
@@ -23,11 +23,11 @@ export class MessageService {
 
   async updateMessage(userId: string, updateMessageDto: UpdateMessageDto): Promise<MessageDto> {
     try {
-      const message = await this.messageRepository.updateMessage(updateMessageDto);
-
-      if (message.senderId !== userId) {
+      const existingMessage = await this.messageRepository.getMessage(updateMessageDto.messageId)
+      if (existingMessage.senderId !== userId) {
         throw new WsException("You can only update your own messages.");
       }
+      const message = await this.messageRepository.updateMessage(updateMessageDto);
       return message;
     } catch (error) {
       this.logger.error(`Failed to update message with ID: ${updateMessageDto.messageId} for user: ${userId}`, error.stack);
