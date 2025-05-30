@@ -1,17 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsArray, IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
-import { MessageDto } from "./message.dto";
-
-enum RoomTypeEnum {
-  GROUP = "GROUP",
-  PRIVATE = "PRIVATE",
-}
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
+import { RoomTypeEnum } from "../common/enums/room-type.enum";
 
 export class CreateRoomDto {
   @ApiProperty({ required: true })
   @IsString()
   @IsNotEmpty()
+  @IsUUID()
   hostId: string;
 
   @ApiProperty({ required: true })
@@ -41,6 +37,7 @@ export class AssignUsersDto {
   @ApiProperty({ required: true, type: String, isArray: true })
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
+  @IsUUID(undefined, { each: true, message: 'Each participant must have a valid UUID' })
   participantsId: string[];
 }
 
@@ -52,6 +49,7 @@ export class DeleteRoomDto {
   @IsNotEmpty()
   hostId: string;
 
+  @ApiProperty({ required: true })
   @IsString()
   @IsNotEmpty()
   @IsUUID()

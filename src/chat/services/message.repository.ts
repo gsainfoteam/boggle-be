@@ -100,7 +100,7 @@ export class MessageRepository {
 
       const notFoundIds = deleteMessageDto.messageIds.filter(id => !messages.find(msg => msg.uuid === id));
       if(notFoundIds.length > 0){
-        throw new WsException(`Messages with IDs: ${notFoundIds.join(', ')}`)
+        throw new WsException(`Messages not found IDs: ${notFoundIds.join(', ')}`)
       }
 
       const result = await this.prisma.message.deleteMany({

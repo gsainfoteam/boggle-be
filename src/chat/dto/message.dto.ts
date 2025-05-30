@@ -6,6 +6,7 @@ export class CreateMessageDto {
   @ApiProperty({ required: true })
   @IsString()
   @IsNotEmpty()
+  @IsUUID()
   roomId: string;
 
   @ApiProperty({ required: true, example: 'Hello, this is a message.' })
@@ -16,6 +17,7 @@ export class CreateMessageDto {
   @ApiProperty({ required: true })
   @IsString()
   @IsNotEmpty()
+  @IsUUID()
   senderId: string;
 }
 
@@ -84,7 +86,7 @@ export class FilterMessageDto {
   @IsOptional()
   filter?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: true })
   @IsUUID()
   @IsString()
   @IsNotEmpty()
