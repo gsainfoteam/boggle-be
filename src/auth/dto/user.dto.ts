@@ -16,10 +16,6 @@ export class UserDto {
   @ApiProperty({ example: 'abcde@gm.gist.ac.kr' })
   readonly email: string;
 
-  @IsString()
-  @ApiProperty({ example: 'abcde' })
-  readonly password: string;
-
   @IsNumber()
   @ApiProperty({ example: '20250000' })
   readonly studentId: number;
@@ -31,8 +27,4 @@ export class UserDto {
   @IsArray()
   @ApiProperty({ type: [PostDto] })
   readonly posts: PostDto[];
-
-  @IsString()
-  @ApiProperty({ example: 'ACTIVE' })
-  readonly status: UserStatus;
 }

@@ -31,9 +31,13 @@
     CLOSED
   }
 
+  enum RoomType{
+    GROUP
+    PRIVATE
+  }
+
   model User {
     uuid            String @id @default(uuid())
-
 
     email           String  @unique
     password        String
@@ -41,13 +45,20 @@
     name            String
     studentId       Int
     major           String 
+    connectedUsers   ConnectedUser[]  @relation("ChatUser")
 
     refreshToken    String?
     
     posts           Post[]   @relation("UserPosts")
     joinedPosts     Post[]   @relation("PostParticipants")
 
+    joinedRooms     Room[]   @relation("RoomMembers")
+    hostedRooms     Room[]   @relation("RoomHost")
+
+
     status          UserStatus @default(ACTIVE)
+
+    @@unique([uuid, email])
   }
 
   model Post {
@@ -69,4 +80,46 @@
     deadline        DateTime
 
     status          PostStatus  @default(OPEN)
+  }
+
+  model ConnectedUser{
+    uuid      String  @id @default(uuid())
+
+    user      User    @relation("ChatUser", fields: [userId, email], references: [uuid, email])
+    userId    String  
+    email     String
+    
+
+    socketId  String     @unique
+    joinedAt  DateTime   @default(now())
+    messages  Message[]  @relation("UserMessages")
+  }
+
+  model Message{
+    uuid           String @id @default(uuid())
+
+    content        String
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
+
+    sender         ConnectedUser @relation("UserMessages", fields: [senderId], references: [uuid])
+    senderId       String
+    room           Room       @relation("RoomMessages", fields: [roomId], references: [uuid])
+    roomId         String
+  }
+
+  model Room{
+    uuid          String @id @default(uuid())
+
+    host          User   @relation("RoomHost", fields:[hostId], references:[uuid])
+    hostId        String
+
+    name          String
+    roomType      RoomType
+
+    members       User[] @relation("RoomMembers")
+    messages      Message[]    @relation("RoomMessages")
+
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
   }
