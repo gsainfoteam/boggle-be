@@ -11,14 +11,17 @@ export class RoomRepository {
 
     constructor(private prisma: PrismaService) { }
 
-    async create({ name, hostId, roomType, participantsId }: CreateRoomDto) {
+    async create({ name, hostId, romType, participantsId }: CreateRoomDto) {
         try {
+
+             const allMemberIds = [hostId, ...participantsId];
+
             return await this.prisma.room.create({
                 data: {
                     hostId: hostId,
-                    roomType: roomType,
+                    roomType: romType,
                     name: name,
-                    members: { connect: participantsId.map(id => ({ uuid: id })) },
+                    members: { connect: allMemberIds.map(id => ({ uuid: id }))},
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 },
@@ -57,13 +60,16 @@ export class RoomRepository {
     }
 
     async update({ roomId, name, participantsId, hostId }: UpdateRoomDto) {
+
+        const allMembersIds = [hostId, ...participantsId];
+
         try {
             return await this.prisma.room.update({
                 where: { uuid: roomId },
                 data: {
                     name: name,
                     members: {
-                        connect: participantsId.map((id) => ({ uuid: id })),
+                        connect: allMembersIds.map((id) => ({ uuid: id })),
                     },
                     hostId: hostId
                 },

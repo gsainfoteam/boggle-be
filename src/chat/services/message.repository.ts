@@ -4,6 +4,7 @@ import { CreateMessageDto, DeleteMessageDto, MessageDto, UpdateMessageDto } from
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { WsException } from "@nestjs/websockets";
 import { Message } from "@prisma/client";
+import { create } from "domain";
 
 @Injectable()
 export class MessageRepository {

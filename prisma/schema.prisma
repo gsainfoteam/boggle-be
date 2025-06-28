@@ -55,6 +55,7 @@
     joinedRooms     Room[]   @relation("RoomMembers")
     hostedRooms     Room[]   @relation("RoomHost")
 
+    messages  Message[]  @relation("UserMessages")
 
     status          UserStatus @default(ACTIVE)
 
@@ -92,7 +93,6 @@
 
     socketId  String     @unique
     joinedAt  DateTime   @default(now())
-    messages  Message[]  @relation("UserMessages")
   }
 
   model Message{
@@ -102,7 +102,7 @@
     createdAt      DateTime    @default(now())
     updatedAt      DateTime    @updatedAt
 
-    sender         ConnectedUser @relation("UserMessages", fields: [senderId], references: [uuid])
+    sender         User @relation("UserMessages", fields: [senderId], references: [uuid])
     senderId       String
     room           Room       @relation("RoomMessages", fields: [roomId], references: [uuid])
     roomId         String

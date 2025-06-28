@@ -14,8 +14,9 @@ export class CreateMessageDto {
   @IsNotEmpty()
   content: string;
 
-  @ApiProperty({ required: true })
+  @ApiProperty({required: false })
   @IsString()
+  @IsOptional()
   @IsNotEmpty()
   @IsUUID()
   senderId: string;

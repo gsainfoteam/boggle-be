@@ -17,8 +17,7 @@ export class CreateRoomDto {
 
   @ApiProperty({ required: true, enum: RoomTypeEnum })
   @IsNotEmpty()
-  @Transform((value) => value.toString())
-  roomType: RoomTypeEnum;
+  romType: RoomTypeEnum;
 
   @ApiProperty({ required: false, type: String, isArray: true })
   @IsNotEmpty()
@@ -43,9 +42,10 @@ export class AssignUsersDto {
 
 
 export class DeleteRoomDto {
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: false })
   @IsString()
   @IsUUID()
+  @IsOptional()
   @IsNotEmpty()
   hostId: string;
 
@@ -57,8 +57,9 @@ export class DeleteRoomDto {
 }
 
 export class UpdateRoomDto {
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: false })
   @IsString()
+  @IsOptional()
   @IsUUID()
   @IsNotEmpty()
   hostId: string;
