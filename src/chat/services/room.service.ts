@@ -1,6 +1,6 @@
 import { RoomRepository } from "./room.repository";
 import { Injectable, Logger } from "@nestjs/common";
-import { AssignUsersDto, CreateRoomDto, UpdateRoomDto } from "../dto/room.dto";
+import { AssignUsersDto, CreateRoomDto, DeleteUsersDto, UpdateRoomDto } from "../dto/room.dto";
 import { Room, User } from "@prisma/client";
 import { WsException } from "@nestjs/websockets";
 
@@ -85,35 +85,35 @@ export class RoomService {
         }
     }
 
-    async joinRoom(roomId: string, user: User): Promise<Room> {
+    async joinRoom(roomId: string, userId: string): Promise<Room & { members: User[] }> {
         try {
-            return await this.roomRepository.joinRoom(roomId, user.uuid);
+            return await this.roomRepository.joinRoom(roomId, userId);
         } catch (error) {
             if (error instanceof WsException) {
                 throw error;
             }
-            this.logger.error(`Unexpected error for user ${user.uuid} joining room ${roomId}: ${error.message}`, error.stack);
+            this.logger.error(`Unexpected error for user ${userId} joining room ${roomId}: ${error.message}`, error.stack);
             throw new WsException("Unexpected error when joining room.");
         }
     }
 
-    async leaveRoom(roomId: string, user: User): Promise<Room> {
+    async leaveRoom(roomId: string, userId: string): Promise<Room & { members: User[] }> {
         try {
-            return await this.roomRepository.leaveRoom(roomId, user.uuid);
+            return await this.roomRepository.leaveRoom(roomId, userId);
         } catch (error) {
             if (error instanceof WsException) {
                 throw error;
             }
-            this.logger.error(`Unexpected error for user ${user.uuid} leaving room ${roomId}: ${error.message}`, error.stack);
+            this.logger.error(`Unexpected error for user ${userId} leaving room ${roomId}: ${error.message}`, error.stack);
             throw new WsException("Unexpected error when leaving room.");
         }
     }
 
-    async assignUsers(assignUsersDto: AssignUsersDto, user: User): Promise<Room> {
+    async assignUsers(assignUsersDto: AssignUsersDto, userId: string): Promise<Room & { members: User[] }> {
         try {
             const room = await this.roomRepository.findOne(assignUsersDto.roomId);
-            if (user.uuid !== room.hostId) {
-                this.logger.warn(`User ${user.uuid} attempted to assign users to room ${assignUsersDto.roomId} but is not the host.`);
+            if (userId !== room.hostId) {
+                this.logger.warn(`User ${userId} attempted to assign users to room ${assignUsersDto.roomId} but is not the host.`);
                 throw new WsException("Only the host is allowed to assign users.");
             }
             return await this.roomRepository.assignUsers(assignUsersDto);
@@ -121,8 +121,26 @@ export class RoomService {
             if (error instanceof WsException) {
                 throw error;
             }
-            this.logger.error(`Unexpected error when assigning users to room ${assignUsersDto.roomId} by user ${user.uuid}: ${error.message}`, error.stack);
+            this.logger.error(`Unexpected error when assigning users to room ${assignUsersDto.roomId} by user ${userId}: ${error.message}`, error.stack);
             throw new WsException("Unexpected error when assigning users.");
         }
+    }
+
+    async deleteUsers(deleteUsersDto: DeleteUsersDto, userId: string): Promise<Room & { members: User[] }> {
+        try{
+            const room = await this.roomRepository.findOne(deleteUsersDto.roomId);
+            if (userId !== room.hostId) {
+                this.logger.warn(`User ${userId} attempted to delete users from room ${deleteUsersDto.roomId} but is not the host.`);
+                throw new WsException("Only the host is allowed to delete users.");
+            }
+            return await this.roomRepository.deleteUsers(deleteUsersDto);
+        }
+        catch(error){
+            if (error instanceof WsException) {
+                throw error;
+            }
+            this.logger.error(`Unexpected error when deleting users from room ${deleteUsersDto.roomId} by user ${userId}: ${error.message}`, error.stack);
+            throw new WsException("Unexpected error when deleting users.");
+        } 
     }
 }

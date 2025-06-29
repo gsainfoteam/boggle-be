@@ -14,6 +14,7 @@ import { WsValidationPipe } from './common/pipes/ws-validation.pipe';
 import { CreateRoomDto, DeleteRoomDto, UpdateRoomDto } from './dto/room.dto';
 import { CreateMessageDto, DeleteMessageDto, FilterMessageDto, UpdateMessageDto } from './dto/message.dto';
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
+import { verify } from 'crypto';
 
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway(3002, { cors: { origin: '*' } })
@@ -96,7 +97,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             const room = await this.roomService.findRoomById(roomId);
             const isMember = room.members.some(member => member.uuid === userId);
-            if (!isMember && room.hostId !== userId) {
+            if (!isMember) {
                 throw new WsException('Access Denied: You are not a member of this room.');
             }
 
@@ -125,16 +126,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 throw new WsException('Only the host can update the room.');
             }
 
-            if (room.roomType === RoomTypeEnum.PRIVATE && updateRoomDto.participantsId) {
-                throw new WsException('Private rooms cannot have their participants updated.');
-            }
-
-            if (updateRoomDto.participantsId) {
-                this.validateRoomTypeAndParticipants(
-                    room.roomType,
-                    updateRoomDto.participantsId,
-                    currentUser.uuid,
-                );
+            if (room.roomType === RoomTypeEnum.PRIVATE) {
+                throw new WsException('Private rooms cannot be updated.');
             }
 
             const updatedRoom = await this.roomService.updateRoom(
@@ -156,6 +149,138 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 error.stack,
             );
             throw new WsException('Error occurred while updating room details.');
+        }
+    }
+
+    @SubscribeMessage('joinRoom')
+    async onJoinRoom(
+        @WsCurrentUser() currentUser: UserPayload,
+        @MessageBody(new WsValidationPipe()) roomJoinDto: { roomId: string },
+    ): Promise<void> {
+        const { uuid: userId } = currentUser;
+        const { roomId } = roomJoinDto;
+
+        try {
+            const room = await this.roomService.joinRoom(roomId, userId);
+
+            this.verifyUserAuthorization(room.members, userId);
+
+            await this.notifyRoomParticipants(
+                room.members,
+                'userJoined',
+                { userId, roomId },
+            );
+            this.logger.log(
+                `User ID ${userId} joined Room UUID ${room.uuid} successfully.`,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error joining room with UUID ${roomId} by User ID ${userId}: ${error.message}`,
+                error.stack,
+            );
+            throw new WsException('Error occurred while joining the room.');
+        }
+    }
+
+    @SubscribeMessage('assignUsers')
+    async onAssignUsers(
+        @WsCurrentUser() currentUser: UserPayload,
+        @MessageBody(new WsValidationPipe()) assignUsersDto: { roomId: string; participantsId: string[] },
+    ): Promise<void> {
+        const { uuid: userId } = currentUser;
+        const { roomId, participantsId } = assignUsersDto;
+
+        try {
+            const room = await this.roomService.findRoomById(roomId);
+            if (room.hostId !== userId) {
+                throw new WsException('Only the host can assign users to the room.');
+            }
+
+            this.validateRoomTypeAndParticipants(room.roomType, participantsId, userId);
+            this.verifyUserAuthorization(room.members, userId);
+
+            const updatedRoom = await this.roomService.assignUsers(assignUsersDto, userId);
+
+            await this.notifyRoomParticipants(
+                updatedRoom.members,
+                'usersAssigned',
+                updatedRoom,
+            );
+            this.logger.log(
+                `Users assigned to Room UUID ${roomId} successfully by User ID ${userId}.`,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error assigning users to Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
+                error.stack,
+            );
+            throw new WsException('Error occurred while assigning users to the room.');
+        }
+    }
+
+
+    @SubscribeMessage('leaveRoom')
+    async onLeaveRoom(
+        @WsCurrentUser() currentUser: UserPayload,
+        @MessageBody(new WsValidationPipe()) roomLeaveDto: { roomId: string },
+    ): Promise<void> {
+        const { uuid: userId } = currentUser;
+        const { roomId } = roomLeaveDto;
+
+        try {
+            const room = await this.roomService.leaveRoom(roomId, userId);
+            this.verifyUserAuthorization(room.members, userId);
+
+            await this.notifyRoomParticipants(
+                room.members,
+                'userLeft',
+                { userId, roomId },
+            );
+            this.logger.log(
+                `User ID ${userId} left Room UUID ${room.uuid} successfully.`,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error leaving room with UUID ${roomId} by User ID ${userId}: ${error.message}`,
+                error.stack,
+            );
+            throw new WsException('Error occurred while leaving the room.');
+        }
+    }
+
+    @SubscribeMessage('deleteUsers')
+    async onDeleteUsers(
+        @WsCurrentUser() currentUser: UserPayload,
+        @MessageBody(new WsValidationPipe()) deleteUsersDto: { roomId: string; participantsId: string[] },
+    ): Promise<void> {
+        const { uuid: userId } = currentUser;
+        const { roomId, participantsId } = deleteUsersDto;
+
+        try {
+            const room = await this.roomService.findRoomById(roomId);
+            if (room.hostId !== userId) {
+                throw new WsException('Only the host can delete users from the room.');
+            }
+
+            this.verifyUserAuthorization(room.members, userId);
+            this.validateRoomTypeAndParticipants(room.roomType, participantsId, userId);
+
+            const updatedRoom = await this.roomService.deleteUsers(deleteUsersDto, userId);
+
+            await this.notifyRoomParticipants(
+                updatedRoom.members,
+                'usersDeleted',
+                updatedRoom,
+            );
+            this.logger.log(
+                `Users deleted from Room UUID ${roomId} successfully by User ID ${userId}.`,
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error deleting users from Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
+                error.stack,
+            );
+            throw new WsException('Error occurred while deleting users from the room.');
         }
     }
 
@@ -237,7 +362,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             const room = await this.roomService.findRoomById(roomId);
             const isMember = room.members.some(member => member.uuid === userId);
-            if (!isMember && room.hostId !== userId) {
+            if (!isMember) {
                 throw new WsException('Access Denied: You are not a member of this room.');
             }
 
@@ -294,7 +419,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             const room = await this.roomService.findRoomById(roomId);
             const isMember = room.members.some(member => member.uuid === userId);
-            if (!isMember && room.hostId !== userId) {
+            if (!isMember) {
                 throw new WsException('Access Denied: You are not a member of this room.');
             }
 
@@ -467,7 +592,7 @@ private extractJwtToken(socket: Socket): string {
 
             const newAccessToken = this.jwtService.sign(
                 { uuid: currentUser.uuid, email: currentUser.email },
-                { secret: process.env.JWT_SECRET, expiresIn: '1h' },
+                { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '1h' },
             );
 
             socket.emit('tokenRefreshed', { accessToken: newAccessToken });

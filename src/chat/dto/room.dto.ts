@@ -41,6 +41,21 @@ export class AssignUsersDto {
 }
 
 
+export class DeleteUsersDto {
+  @ApiProperty({ required: true })
+  @IsString()
+  @IsNotEmpty()
+  @IsUUID()
+  roomId: string;
+
+  @ApiProperty({ required: true, type: String, isArray: true })
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  @IsUUID(undefined, { each: true, message: 'Each participant must have a valid UUID' })
+  participantsId: string[];
+}
+
+
 export class DeleteRoomDto {
   @ApiProperty({ required: false })
   @IsString()
@@ -57,13 +72,6 @@ export class DeleteRoomDto {
 }
 
 export class UpdateRoomDto {
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  @IsUUID()
-  @IsNotEmpty()
-  hostId: string;
-
   @ApiProperty({ required: true })
   @IsString()
   @IsUUID()
@@ -75,10 +83,4 @@ export class UpdateRoomDto {
   @IsNotEmpty()
   @IsOptional()
   name: string;
-
-  @ApiProperty({ required: false, type: String, isArray: true })
-  @IsNotEmpty()
-  @IsOptional()
-  @IsUUID(undefined, { each: true, message: 'Each participant must have a valid UUID' })
-  participantsId: string[];
 }

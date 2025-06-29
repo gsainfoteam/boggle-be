@@ -1,5 +1,5 @@
 import { PrismaService } from "src/prisma/prisma.service";
-import { AssignUsersDto, CreateRoomDto, UpdateRoomDto } from "../dto/room.dto";
+import { AssignUsersDto, CreateRoomDto, DeleteUsersDto, UpdateRoomDto } from "../dto/room.dto";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { Injectable, Logger } from "@nestjs/common";
 import { WsException } from "@nestjs/websockets";
@@ -59,19 +59,13 @@ export class RoomRepository {
         }
     }
 
-    async update({ roomId, name, participantsId, hostId }: UpdateRoomDto) {
-
-        const allMembersIds = [hostId, ...participantsId];
-
+    async update({ roomId, name, }: UpdateRoomDto) {
         try {
             return await this.prisma.room.update({
                 where: { uuid: roomId },
                 data: {
                     name: name,
-                    members: {
-                        connect: allMembersIds.map((id) => ({ uuid: id })),
-                    },
-                    hostId: hostId
+                    updatedAt: new Date(),
                 },
                 include: {
                     members: true
@@ -121,6 +115,9 @@ export class RoomRepository {
                     members: {
                         connect: { uuid: userId }
                     }
+                },
+                include: {
+                    members: true
                 }
             });
         } catch (error) {
@@ -144,6 +141,9 @@ export class RoomRepository {
                     members: {
                         disconnect: { uuid: userId }
                     }
+                },
+                include: {
+                    members: true
                 }
             });
         } catch (error) {
@@ -193,6 +193,9 @@ export class RoomRepository {
                     members: {
                         connect: participantsId.map((id) => ({ uuid: id }))
                     }
+                },
+                include: {
+                    members: true
                 }
             });
         } catch (error) {
@@ -205,6 +208,32 @@ export class RoomRepository {
             }
             this.logger.error(`Unexpected error assigning users to room ${roomId}: ${error.message}`, error.stack);
             throw new WsException('Unexpected error when assigning users.');
+        }
+    }
+
+    async deleteUsers({roomId, participantsId}: DeleteUsersDto) {
+        try {
+            return await this.prisma.room.update({
+                where: { uuid: roomId },
+                data: {
+                    members: {
+                        disconnect: participantsId.map((id) => ({ uuid: id }))
+                    }
+                },
+                include: {
+                    members: true
+                }
+            });
+        } catch (error) {
+            if (error instanceof PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    throw new WsException('Room or user not found.');
+                }
+                this.logger.error(`Database error when removing users from room ${roomId}: ${error.message}`, error.stack);
+                throw new WsException('Database error when removing user from room.');
+            }
+            this.logger.error(`Unexpected error when removing users from room ${roomId}: ${error.message}`, error.stack);
+            throw new WsException('Unexpected error when removing user from room.');
         }
     }
 }
