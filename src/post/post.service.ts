@@ -20,8 +20,10 @@ export class PostService {
         content: post.content,
         type: post.postType,
         tags: post.tags,
-        author: post.author.name,
-        authorId: post.authorId,
+        author: {
+          uuid: post.authorId,
+          name: post.author.name,
+        },
         participants: post.participants,
         maxParticipants: post.maxParticipants,
         createdAt: post.createdAt,
@@ -40,8 +42,10 @@ export class PostService {
       content: post.content,
       type: post.postType,
       tags: post.tags,
-      author: post.author.name,
-      authorId: post.authorId,
+      author: {
+        uuid: post.authorId,
+        name: post.author.name,
+      },
       participants: post.participants,
       maxParticipants: post.maxParticipants,
       createdAt: post.createdAt,
@@ -78,7 +82,7 @@ export class PostService {
     user: PayloadDto,
   ): Promise<PostDto> {
     const post = await this.getPost(postUuid);
-    if (user.uuid !== post.authorId && user.uuid !== userUuid)
+    if (user.uuid !== post.author.uuid && user.uuid !== userUuid)
       throw new ForbiddenException('Forbidden Access');
     await this.postRepository.deleteUser(postUuid, userUuid);
     return await this.getPost(postUuid);

@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsDate, IsNumber, IsString } from 'class-validator';
-import { participantDto } from './participant.dto';
+import { ParticipantDto } from './participant.dto';
 import { PostType } from '@prisma/client';
+import { AuthorDto } from './author.dto';
 
 export class PostDto {
   @IsString()
@@ -25,16 +26,12 @@ export class PostDto {
   readonly tags: string[];
 
   @IsString()
-  @ApiProperty({ example: 'name of author' })
-  readonly author: string;
-
-  @IsString()
-  @ApiProperty({ example: '2d87779b-7632-4163-afa0-5062d83e325b' })
-  readonly authorId: string;
+  @ApiProperty({ example: AuthorDto })
+  readonly author: AuthorDto;
 
   @IsArray()
-  @ApiProperty({ type: [participantDto] })
-  readonly participants: participantDto[];
+  @ApiProperty({ type: [ParticipantDto] })
+  readonly participants: ParticipantDto[];
 
   @IsNumber()
   @ApiProperty({ example: 5 })
