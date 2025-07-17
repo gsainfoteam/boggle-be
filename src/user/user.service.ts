@@ -15,11 +15,11 @@ import { PostDto } from 'src/post/dto/post.dto';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findUser(uuid: string): Promise<UserDto> {
+  async findUser(id: string): Promise<UserDto> {
     const user = await this.prisma.user.findUnique({
-      where: { uuid: uuid },
+      where: { id: id },
       select: {
-        uuid: true,
+        id: true,
         name: true,
         email: true,
         password: true,
@@ -27,10 +27,10 @@ export class UserService {
         major: true,
         posts: {
           select: {
-            uuid: true,
+            id: true,
             title: true,
             content: true,
-            postType: true,
+            type: true,
             tags: true,
             authorId: true,
             participants: true,
@@ -46,7 +46,7 @@ export class UserService {
       throw new NotFoundException('User uuid is not found');
     }
     return {
-      uuid: user.uuid,
+      uuid: user.id,
       name: user.name,
       email: user.email,
       password: user.password,
@@ -57,14 +57,11 @@ export class UserService {
     };
   }
 
-  async updateUser(
-    uuid: string,
-    { password }: UpdateUserDto,
-  ): Promise<UserDto> {
+  async updateUser(id: string, { password }: UpdateUserDto): Promise<UserDto> {
     await this.prisma.user
       .update({
         where: {
-          uuid: uuid,
+          id: id,
         },
         data: {
           password: await bcrypt.hash(password, 10),
@@ -79,13 +76,13 @@ export class UserService {
         throw new InternalServerErrorException('Internal server error');
       });
 
-    return this.findUser(uuid);
+    return this.findUser(id);
   }
 
-  async deleteUser(uuid: string): Promise<UserDto> {
+  async deleteUser(id: string): Promise<UserDto> {
     await this.prisma.user
       .update({
-        where: { uuid: uuid },
+        where: { id: id },
         data: { status: 'INACTIVE' },
       })
       .catch((error) => {
@@ -97,6 +94,6 @@ export class UserService {
         throw new InternalServerErrorException('Internal serval error');
       });
 
-    return this.findUser(uuid);
+    return this.findUser(id);
   }
 }

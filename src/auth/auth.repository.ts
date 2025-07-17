@@ -41,10 +41,10 @@ export class AuthRepository {
       });
   }
 
-  async saveToken(uuid: string, token: string) {
+  async saveToken(id: string, token: string) {
     await this.prisma.user
       .update({
-        where: { uuid: uuid },
+        where: { id: id },
         data: { refreshToken: token },
       })
       .catch((error) => {
@@ -60,7 +60,7 @@ export class AuthRepository {
 
   async findUser(payload: PayloadDto) {
     return await this.prisma.user
-      .findUnique({ where: { uuid: payload.uuid } })
+      .findUnique({ where: { id: payload.id } })
       .then((user) => {
         if (!user) throw new NotFoundException('User uuid is not found');
         return user;
@@ -70,7 +70,7 @@ export class AuthRepository {
   async deleteToken(payload: PayloadDto): Promise<void> {
     await this.prisma.user
       .update({
-        where: { uuid: payload.uuid },
+        where: { id: payload.id },
         data: { refreshToken: null },
       })
       .catch((error) => {

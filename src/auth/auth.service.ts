@@ -22,7 +22,7 @@ export class AuthService {
     if (!(await bcrypt.compare(body.password, user.password)))
       throw new UnauthorizedException('Password is failed');
 
-    const payload: PayloadDto = { uuid: user.uuid };
+    const payload: PayloadDto = { id: user.id };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: '15m',
@@ -32,10 +32,10 @@ export class AuthService {
       expiresIn: '1d',
     });
 
-    await this.authRepository.saveToken(payload.uuid, refreshToken);
+    await this.authRepository.saveToken(payload.id, refreshToken);
 
     return {
-      uuid: user.uuid,
+      id: user.id,
       access_token: accessToken,
       refresh_token: refreshToken,
     };
@@ -63,7 +63,7 @@ export class AuthService {
       });
 
       return {
-        uuid: payload.uuid,
+        id: payload.id,
         access_token: accessToken,
         refresh_token: refreshToken,
       };

@@ -39,17 +39,17 @@ export class UserController {
   async findSelf(
     @Request() req: Request & { user: PayloadDto },
   ): Promise<UserDto> {
-    return this.userService.findUser(req.user.uuid);
+    return this.userService.findUser(req.user.id);
   }
 
-  @Get(':uuid')
+  @Get(':id')
   @ApiOperation({ summary: 'Get user', description: 'Get user by ID' })
-  @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a user' })
+  @ApiParam({ name: 'id', type: String, description: 'Uuid of a user' })
   @ApiOkResponse({ type: UserDto, description: 'Return user information' })
   @ApiNotFoundResponse({ description: 'User Not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
-  async findUser(@Param() { uuid }: uuidDto): Promise<UserDto> {
-    return this.userService.findUser(uuid);
+  async findUser(@Param() { id }: uuidDto): Promise<UserDto> {
+    return this.userService.findUser(id);
   }
 
   @Patch()
@@ -68,7 +68,7 @@ export class UserController {
     @Body() UserDto: UpdateUserDto,
     @Request() req: Request & { user: PayloadDto },
   ): Promise<UserDto> {
-    return this.userService.updateUser(req.user.uuid, UserDto);
+    return this.userService.updateUser(req.user.id, UserDto);
   }
 
   @Delete()
@@ -86,6 +86,6 @@ export class UserController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   deleteUser(@Request() req: Request & { user: PayloadDto }): Promise<UserDto> {
-    return this.userService.deleteUser(req.user.uuid);
+    return this.userService.deleteUser(req.user.id);
   }
 }
