@@ -26,9 +26,10 @@ export class PostService {
         maxParticipants: post.maxParticipants,
         createdAt: post.createdAt,
         deadline: post.deadline,
+        ...(post.roommateDetails && { roommateDetails: post.roommateDetails }),
       };
     });
-    const total = await this.postRepository.getCount();
+    const total = await this.postRepository.getCount(query.type);
     return { posts: posts, total: total };
   }
 
@@ -48,16 +49,12 @@ export class PostService {
       maxParticipants: post.maxParticipants,
       createdAt: post.createdAt,
       deadline: post.deadline,
+      ...(post.roommateDetails && { roommateDetails: post.roommateDetails }),
     };
   }
 
   async createPost(postDto: CreatePostDto, user: PayloadDto): Promise<PostDto> {
-    let post;
-    if (postDto.type === 'ROOMMATE') {
-      post = await this.postRepository.createRoommatePost(postDto, user.id);
-    } else {
-      post = await this.postRepository.createPost(postDto, user.id);
-    }
+    const post = await this.postRepository.createPost(postDto, user.id);
 
     return this.getPost(post.id);
   }

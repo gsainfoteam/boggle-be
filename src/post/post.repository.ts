@@ -9,6 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListQueryDto } from './dto/postList.dto';
+import { PostType } from '@prisma/client';
 
 @Injectable()
 export class PostRepository {
@@ -35,6 +36,7 @@ export class PostRepository {
             name: true,
           },
         },
+        roommateDetails: true,
       },
     });
   }
@@ -56,6 +58,7 @@ export class PostRepository {
               name: true,
             },
           },
+          roommateDetails: true,
         },
       })
       .catch((error) => {
@@ -69,37 +72,7 @@ export class PostRepository {
       });
   }
 
-  async createPost(
-    { title, content, type, tags, maxParticipants, deadline }: CreatePostDto,
-    authorId: string,
-  ) {
-    return await this.prisma.post
-      .create({
-        data: {
-          title: title,
-          content: content,
-          type: type,
-          tags: tags,
-          author: { connect: { id: authorId } },
-          participants: { connect: [{ id: authorId }] },
-          maxParticipants: maxParticipants,
-          createdAt: new Date(new Date().getTime()),
-          deadline: deadline,
-        },
-      })
-      .catch((error) => {
-        if (error instanceof PrismaClientKnownRequestError) {
-          throw new InternalServerErrorException('Database Error');
-        }
-        throw new InternalServerErrorException('Internal Server Error');
-      });
-  }
-
-  async createRoommatePost(post: CreatePostDto, authorId: string) {
-    if (!post.roommateDetails) {
-      throw new BadRequestException('Roommate details are required');
-    }
-
+  async createPost(post: CreatePostDto, authorId: string) {
     return await this.prisma.post
       .create({
         data: {
@@ -112,27 +85,30 @@ export class PostRepository {
           maxParticipants: post.maxParticipants,
           createdAt: new Date(new Date().getTime()),
           deadline: post.deadline,
-          roommateDetails: {
-            create: {
-              grade: post.roommateDetails.grade,
-              room: post.roommateDetails.room,
-              semester: post.roommateDetails.semester,
+          ...(post.type === 'ROOMMATE' &&
+            post.roommateDetails && {
+              roommateDetails: {
+                create: {
+                  grade: post.roommateDetails.grade,
+                  room: post.roommateDetails.room,
+                  semester: post.roommateDetails.semester,
 
-              refrigerator: post.roommateDetails.refrigerator,
-              wifi: post.roommateDetails.wifi,
-              snoring: post.roommateDetails.snoring,
-              smoking: post.roommateDetails.smoking,
-              sleepTime: post.roommateDetails.sleepTime,
-              wakeUpTime: post.roommateDetails.wakeUpTime,
-              mbti: post.roommateDetails.mbti,
+                  refrigerator: post.roommateDetails.refrigerator,
+                  wifi: post.roommateDetails.wifi,
+                  snoring: post.roommateDetails.snoring,
+                  smoking: post.roommateDetails.smoking,
+                  sleepTime: post.roommateDetails.sleepTime,
+                  wakeUpTime: post.roommateDetails.wakeUpTime,
+                  mbti: post.roommateDetails.mbti,
 
-              rmRefrigerator: post.roommateDetails.rmRefrigerator,
-              rmWifi: post.roommateDetails.rmWifi,
-              rmSnoring: post.roommateDetails.rmSnoring,
-              rmSmoking: post.roommateDetails.rmSmoking,
-              rmMbti: post.roommateDetails.rmMbti,
-            },
-          },
+                  rmRefrigerator: post.roommateDetails.rmRefrigerator,
+                  rmWifi: post.roommateDetails.rmWifi,
+                  rmSnoring: post.roommateDetails.rmSnoring,
+                  rmSmoking: post.roommateDetails.rmSmoking,
+                  rmMbti: post.roommateDetails.rmMbti,
+                },
+              },
+            }),
         },
       })
       .catch((error) => {
@@ -246,7 +222,11 @@ export class PostRepository {
       });
   }
 
-  async getCount(): Promise<number> {
-    return await this.prisma.post.count();
+  async getCount(type: PostType | 'ALL'): Promise<number> {
+    return await this.prisma.post.count({
+      where: {
+        type: type === 'ALL' ? undefined : type,
+      },
+    });
   }
 }
