@@ -26,7 +26,6 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListDto, PostListQueryDto } from './dto/postList.dto';
 import { PayloadDto } from 'src/auth/dto/payload.dto';
@@ -55,7 +54,7 @@ export class PostController {
     summary: 'Get post',
     description: 'Get post using id of post',
   })
-  @ApiParam({ name: 'uuid', type: String, description: 'Uuid of a post' })
+  @ApiParam({ name: 'id', type: String, description: 'Uuid of a post' })
   @ApiOkResponse({
     type: PostDto,
     description: 'Return information of a post',
