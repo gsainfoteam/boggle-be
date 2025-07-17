@@ -2,26 +2,24 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PostRepository } from './post.repository';
 import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
-import { UpdatePostDto } from './dto/updatePost.dto';
 import { PostFullContent } from './types/postFullContent';
-import { PostListQueryDto } from './dto/postListQuery.dto';
-import { PostListDto } from './dto/postList.dto';
+import { PostListDto, PostListQueryDto } from './dto/postList.dto';
 import { PayloadDto } from 'src/auth/dto/payload.dto';
 
 @Injectable()
 export class PostService {
   constructor(private readonly postRepository: PostRepository) {}
 
-  async getPostList(query: PostListQueryDto): Promise<PostListDto> {
+  async getPostList(query: PostListQueryDto) {
     const posts = (await this.postRepository.getPostList(query)).map((post) => {
       return {
-        uuid: post.uuid,
+        id: post.id,
         title: post.title,
         content: post.content,
-        type: post.postType,
+        type: post.type,
         tags: post.tags,
         author: {
-          uuid: post.authorId,
+          id: post.authorId,
           name: post.author.name,
         },
         participants: post.participants,
@@ -37,13 +35,13 @@ export class PostService {
   async getPost(uuid: string): Promise<PostDto> {
     const post = await this.postRepository.getPost(uuid);
     return {
-      uuid: post.uuid,
+      id: post.id,
       title: post.title,
       content: post.content,
-      type: post.postType,
+      type: post.type,
       tags: post.tags,
       author: {
-        uuid: post.authorId,
+        id: post.authorId,
         name: post.author.name,
       },
       participants: post.participants,
@@ -54,45 +52,51 @@ export class PostService {
   }
 
   async createPost(postDto: CreatePostDto, user: PayloadDto): Promise<PostDto> {
-    const post = await this.postRepository.createPost(postDto, user.uuid);
-    return this.getPost(post.uuid);
+    let post;
+    if (postDto.type === 'ROOMMATE') {
+      post = await this.postRepository.createRoommatePost(postDto, user.id);
+    } else {
+      post = await this.postRepository.createPost(postDto, user.id);
+    }
+
+    return this.getPost(post.id);
   }
 
   async updatePost(
     uuid: string,
-    postDto: UpdatePostDto,
+    postDto: CreatePostDto,
     user: PayloadDto,
   ): Promise<PostDto> {
     const authorId = (await this.postRepository.getPost(uuid)).authorId;
-    if (authorId !== user.uuid)
+    if (authorId !== user.id)
       throw new ForbiddenException('Not match user uuid');
 
     await this.postRepository.updatePost(uuid, postDto);
     return this.getPost(uuid);
   }
 
-  async joinPost(uuid: string, user: PayloadDto): Promise<PostDto> {
-    await this.postRepository.joinPost(uuid, user.uuid);
-    return this.getPost(uuid);
+  async joinPost(id: string, user: PayloadDto): Promise<PostDto> {
+    await this.postRepository.joinPost(id, user.id);
+    return this.getPost(id);
   }
 
   async deleteUser(
-    postUuid: string,
-    userUuid: string,
+    postId: string,
+    userId: string,
     user: PayloadDto,
   ): Promise<PostDto> {
-    const post = await this.getPost(postUuid);
-    if (user.uuid !== post.author.uuid && user.uuid !== userUuid)
+    const post = await this.getPost(postId);
+    if (user.id !== post.author.id && user.id !== userId)
       throw new ForbiddenException('Forbidden Access');
-    await this.postRepository.deleteUser(postUuid, userUuid);
-    return await this.getPost(postUuid);
+    await this.postRepository.deleteUser(postId, userId);
+    return await this.getPost(postId);
   }
 
-  async deletePost(uuid: string, user: PayloadDto): Promise<PostFullContent> {
-    const authorId = (await this.postRepository.getPost(uuid)).authorId;
-    if (authorId !== user.uuid)
+  async deletePost(id: string, user: PayloadDto) {
+    const authorId = (await this.postRepository.getPost(id)).authorId;
+    if (authorId !== user.id)
       throw new ForbiddenException('Not match user uuid');
 
-    return await this.postRepository.deletePost(uuid);
+    return await this.postRepository.deletePost(id);
   }
 }

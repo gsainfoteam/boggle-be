@@ -26,11 +26,9 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UpdatePostDto } from './dto/updatePost.dto';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
-import { PostListQueryDto } from './dto/postListQuery.dto';
-import { PostListDto } from './dto/postList.dto';
+import { PostListDto, PostListQueryDto } from './dto/postList.dto';
 import { PayloadDto } from 'src/auth/dto/payload.dto';
 
 @Controller('post')
@@ -52,7 +50,7 @@ export class PostController {
     return await this.postService.getPostList(query);
   }
 
-  @Get(':uuid')
+  @Get(':id')
   @ApiOperation({
     summary: 'Get post',
     description: 'Get post using id of post',
@@ -64,8 +62,8 @@ export class PostController {
   })
   @ApiNotFoundResponse({ description: ' Post uuid is Not Found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
-  async getPost(@Param() { uuid }: PostIdDto): Promise<PostDto> {
-    return await this.postService.getPost(uuid);
+  async getPost(@Param() { id }: PostIdDto): Promise<PostDto> {
+    return await this.postService.getPost(id);
   }
 
   @Post()
@@ -90,13 +88,13 @@ export class PostController {
     return await this.postService.createPost(postDto, req.user);
   }
 
-  @Put(':uuid')
+  @Put(':id')
   @ApiOperation({
     summary: 'Update Post',
     description: 'Update post',
   })
-  @ApiParam({ name: 'uuid', type: String })
-  @ApiBody({ type: UpdatePostDto })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({ type: CreatePostDto })
   @ApiOkResponse({
     type: PostDto,
     description: 'Return information of a updated post',
@@ -108,19 +106,19 @@ export class PostController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async updatePost(
-    @Param() { uuid }: PostIdDto,
-    @Body() postDto: UpdatePostDto,
+    @Param() { id }: PostIdDto,
+    @Body() postDto: CreatePostDto,
     @Request() req: Request & { user: PayloadDto },
   ): Promise<PostDto> {
-    return await this.postService.updatePost(uuid, postDto, req.user);
+    return await this.postService.updatePost(id, postDto, req.user);
   }
 
-  @Patch(':uuid')
+  @Patch(':id')
   @ApiOperation({
     summary: 'Join Post',
     description: 'User Join Post',
   })
-  @ApiParam({ name: 'uuid', type: String })
+  @ApiParam({ name: 'id', type: String })
   @ApiOkResponse({
     type: PostDto,
     description: 'Return information of a updated post',
@@ -131,13 +129,13 @@ export class PostController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async joinPost(
-    @Param() { uuid }: PostIdDto,
+    @Param() { id }: PostIdDto,
     @Request() req: Request & { user: PayloadDto },
   ): Promise<PostDto> {
-    return await this.postService.joinPost(uuid, req.user);
+    return await this.postService.joinPost(id, req.user);
   }
 
-  @Patch(':postUuid/participant/:userUuid')
+  @Patch(':postId/participant/:userId')
   @ApiOperation({
     summary: 'Exit Post',
     description: 'Exit post by user of author',
@@ -155,19 +153,19 @@ export class PostController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async deleteUser(
-    @Param('postUuid') post: string,
-    @Param('userUuid') user: string,
+    @Param('postId') post: string,
+    @Param('userId') user: string,
     @Request() req: Request & { user: PayloadDto },
   ): Promise<PostDto> {
     return await this.postService.deleteUser(post, user, req.user);
   }
 
-  @Delete(':uuid')
+  @Delete(':id')
   @ApiOperation({
     summary: 'Delete Post',
     description: 'Delete post',
   })
-  @ApiParam({ name: 'uuid', type: String })
+  @ApiParam({ name: 'id', type: String })
   @ApiOkResponse({
     type: PostDto,
     description: 'Return information of a deleted post',
@@ -179,9 +177,9 @@ export class PostController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async deletePost(
-    @Param() { uuid }: PostIdDto,
+    @Param() { id }: PostIdDto,
     @Request() req: Request & { user: PayloadDto },
-  ): Promise<PostFullContent> {
-    return await this.postService.deletePost(uuid, req.user);
+  ) {
+    return await this.postService.deletePost(id, req.user);
   }
 }

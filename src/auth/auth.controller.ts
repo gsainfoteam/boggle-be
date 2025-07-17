@@ -41,7 +41,7 @@ export class AuthController {
   })
   @ApiBody({ type: RefreshDto })
   @ApiOkResponse({
-    type: RefreshDto,
+    type: TokenDto,
     description: 'Return access-token and refresh-token',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })

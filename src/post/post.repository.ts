@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -7,35 +8,30 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
-import { UpdatePostDto } from './dto/updatePost.dto';
-import { PostListQueryDto } from './dto/postListQuery.dto';
+import { PostListQueryDto } from './dto/postList.dto';
 
 @Injectable()
 export class PostRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getPostList({
-    skip,
-    take,
-    type,
-  }: PostListQueryDto): Promise<PostFullContent[]> {
+  async getPostList({ skip, take, type }: PostListQueryDto) {
     return await this.prisma.post.findMany({
       skip: skip,
       take: take,
       orderBy: { createdAt: 'asc' },
       where: {
-        postType: type === 'ALL' ? undefined : type,
+        type: type === 'ALL' ? undefined : type,
       },
       include: {
         author: {
           select: {
-            uuid: true,
+            id: true,
             name: true,
           },
         },
         participants: {
           select: {
-            uuid: true,
+            id: true,
             name: true,
           },
         },
@@ -43,20 +39,20 @@ export class PostRepository {
     });
   }
 
-  async getPost(uuid: string): Promise<PostFullContent> {
+  async getPost(id: string) {
     return await this.prisma.post
       .findUniqueOrThrow({
-        where: { uuid: uuid },
+        where: { id: id },
         include: {
           author: {
             select: {
-              uuid: true,
+              id: true,
               name: true,
             },
           },
           participants: {
             select: {
-              uuid: true,
+              id: true,
               name: true,
             },
           },
@@ -82,10 +78,10 @@ export class PostRepository {
         data: {
           title: title,
           content: content,
-          postType: type,
+          type: type,
           tags: tags,
-          author: { connect: { uuid: authorId } },
-          participants: { connect: [{ uuid: authorId }] },
+          author: { connect: { id: authorId } },
+          participants: { connect: [{ id: authorId }] },
           maxParticipants: maxParticipants,
           createdAt: new Date(new Date().getTime()),
           deadline: deadline,
@@ -99,17 +95,65 @@ export class PostRepository {
       });
   }
 
+  async createRoommatePost(post: CreatePostDto, authorId: string) {
+    if (!post.roommateDetails) {
+      throw new BadRequestException('Roommate details are required');
+    }
+
+    return await this.prisma.post
+      .create({
+        data: {
+          title: post.title,
+          content: post.content,
+          type: post.type,
+          tags: post.tags,
+          author: { connect: { id: authorId } },
+          participants: { connect: [{ id: authorId }] },
+          maxParticipants: post.maxParticipants,
+          createdAt: new Date(new Date().getTime()),
+          deadline: post.deadline,
+          roommateDetails: {
+            create: {
+              grade: post.roommateDetails.grade,
+              room: post.roommateDetails.room,
+              semester: post.roommateDetails.semester,
+
+              refrigerator: post.roommateDetails.refrigerator,
+              wifi: post.roommateDetails.wifi,
+              snoring: post.roommateDetails.snoring,
+              smoking: post.roommateDetails.smoking,
+              sleepTime: post.roommateDetails.sleepTime,
+              wakeUpTime: post.roommateDetails.wakeUpTime,
+              mbti: post.roommateDetails.mbti,
+
+              rmRefrigerator: post.roommateDetails.rmRefrigerator,
+              rmWifi: post.roommateDetails.rmWifi,
+              rmSnoring: post.roommateDetails.rmSnoring,
+              rmSmoking: post.roommateDetails.rmSmoking,
+              rmMbti: post.roommateDetails.rmMbti,
+            },
+          },
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          throw new InternalServerErrorException('Database Error');
+        }
+        throw new InternalServerErrorException('Internal Server Error');
+      });
+  }
+
   async updatePost(
-    uuid: string,
-    { title, content, type, tags, maxParticipants, deadline }: UpdatePostDto,
+    id: string,
+    { title, content, type, tags, maxParticipants, deadline }: CreatePostDto,
   ) {
     return await this.prisma.post
       .update({
-        where: { uuid: uuid },
+        where: { id: id },
         data: {
           title: title,
           content: content,
-          postType: type,
+          type: type,
           tags: tags,
           maxParticipants: maxParticipants,
           deadline: deadline,
@@ -126,15 +170,15 @@ export class PostRepository {
       });
   }
 
-  async joinPost(uuid: string, user: string) {
+  async joinPost(id: string, user: string) {
     return await this.prisma.post
       .update({
         where: {
-          uuid: uuid,
+          id: id,
         },
         data: {
           participants: {
-            connect: { uuid: user },
+            connect: { id: user },
           },
         },
       })
@@ -149,16 +193,16 @@ export class PostRepository {
       });
   }
 
-  async deleteUser(uuid: string, user: string) {
+  async deleteUser(id: string, user: string) {
     return await this.prisma.post
       .update({
         where: {
-          uuid: uuid,
+          id: id,
         },
         data: {
           participants: {
             disconnect: {
-              uuid: user,
+              id: user,
             },
           },
         },
@@ -173,20 +217,20 @@ export class PostRepository {
       });
   }
 
-  async deletePost(uuid: string): Promise<PostFullContent> {
+  async deletePost(id: string) {
     return await this.prisma.post
       .delete({
-        where: { uuid: uuid },
+        where: { id: id },
         include: {
           author: {
             select: {
-              uuid: true,
+              id: true,
               name: true,
             },
           },
           participants: {
             select: {
-              uuid: true,
+              id: true,
               name: true,
             },
           },

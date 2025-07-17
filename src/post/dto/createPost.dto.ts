@@ -1,7 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PostType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsArray, IsDate, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsDate,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { roommatePostDto } from './post.dto';
 
 export class CreatePostDto {
   @IsString()
@@ -29,4 +36,8 @@ export class CreatePostDto {
   @Type(() => Date)
   @ApiProperty({ example: '2000-01-01' })
   readonly deadline: Date;
+
+  @IsOptional()
+  @Type(() => roommatePostDto)
+  readonly roommateDetails?: roommatePostDto;
 }
