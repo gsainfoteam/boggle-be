@@ -63,7 +63,7 @@ export class PostRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025') {
-            throw new NotFoundException('Post uuid is not found');
+            throw new NotFoundException('Post id is not found');
           }
           throw new InternalServerErrorException('Database Error');
         }
@@ -158,7 +158,7 @@ export class PostRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025') {
-            throw new NotFoundException('Post uuid is not found');
+            throw new NotFoundException('Post id is not found');
           }
           throw new InternalServerErrorException('Database Error');
         }
@@ -181,7 +181,7 @@ export class PostRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025') {
-            throw new NotFoundException('Post uuid is not found');
+            throw new NotFoundException('Post id is not found');
           }
           throw new InternalServerErrorException('Database Error');
         }
@@ -206,7 +206,7 @@ export class PostRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025')
-            throw new NotFoundException('Post uuid is not found');
+            throw new NotFoundException('Post id is not found');
           throw new InternalServerErrorException('Database error');
         }
         throw new InternalServerErrorException('Internal serval error');
@@ -235,7 +235,7 @@ export class PostRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025')
-            throw new NotFoundException('Post uuid is not found');
+            throw new NotFoundException('Post id is not found');
           throw new InternalServerErrorException('Database error');
         }
         throw new InternalServerErrorException('Internal serval error');

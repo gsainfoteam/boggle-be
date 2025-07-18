@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PostRepository } from './post.repository';
 import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
-import { PostFullContent } from './types/postFullContent';
 import { PostListDto, PostListQueryDto } from './dto/postList.dto';
 import { PayloadDto } from 'src/auth/dto/payload.dto';
 
@@ -33,8 +32,8 @@ export class PostService {
     return { posts: posts, total: total };
   }
 
-  async getPost(uuid: string): Promise<PostDto> {
-    const post = await this.postRepository.getPost(uuid);
+  async getPost(id: string): Promise<PostDto> {
+    const post = await this.postRepository.getPost(id);
     return {
       id: post.id,
       title: post.title,
@@ -60,16 +59,15 @@ export class PostService {
   }
 
   async updatePost(
-    uuid: string,
+    id: string,
     postDto: CreatePostDto,
     user: PayloadDto,
   ): Promise<PostDto> {
-    const authorId = (await this.postRepository.getPost(uuid)).authorId;
-    if (authorId !== user.id)
-      throw new ForbiddenException('Not match user uuid');
+    const authorId = (await this.postRepository.getPost(id)).authorId;
+    if (authorId !== user.id) throw new ForbiddenException('Not match user id');
 
-    await this.postRepository.updatePost(uuid, postDto);
-    return this.getPost(uuid);
+    await this.postRepository.updatePost(id, postDto);
+    return this.getPost(id);
   }
 
   async joinPost(id: string, user: PayloadDto): Promise<PostDto> {
@@ -91,8 +89,7 @@ export class PostService {
 
   async deletePost(id: string, user: PayloadDto) {
     const authorId = (await this.postRepository.getPost(id)).authorId;
-    if (authorId !== user.id)
-      throw new ForbiddenException('Not match user uuid');
+    if (authorId !== user.id) throw new ForbiddenException('Not match user id');
 
     return await this.postRepository.deletePost(id);
   }

@@ -43,10 +43,10 @@ export class UserService {
       },
     });
     if (!user) {
-      throw new NotFoundException('User uuid is not found');
+      throw new NotFoundException('User id is not found');
     }
     return {
-      uuid: user.id,
+      id: user.id,
       name: user.name,
       email: user.email,
       password: user.password,
@@ -70,7 +70,7 @@ export class UserService {
       .catch((error) => {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           if (error.code === 'P2025')
-            throw new NotFoundException('User uuid is not found');
+            throw new NotFoundException('User id is not found');
           throw new InternalServerErrorException('Database error');
         }
         throw new InternalServerErrorException('Internal server error');
@@ -88,7 +88,7 @@ export class UserService {
       .catch((error) => {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           if (error.code === 'P2025')
-            throw new NotFoundException('User uuid is not found');
+            throw new NotFoundException('User id is not found');
           throw new InternalServerErrorException('Database error');
         }
         throw new InternalServerErrorException('Internal serval error');

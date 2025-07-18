@@ -43,7 +43,7 @@ export class PostController {
     type: PostListDto,
     description: 'Return information of a post',
   })
-  @ApiNotFoundResponse({ description: 'Post uuid is Not Found' })
+  @ApiNotFoundResponse({ description: 'Post id is Not Found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   async getPostList(@Query() query: PostListQueryDto): Promise<PostListDto> {
     return await this.postService.getPostList(query);
@@ -54,12 +54,12 @@ export class PostController {
     summary: 'Get post',
     description: 'Get post using id of post',
   })
-  @ApiParam({ name: 'id', type: String, description: 'Uuid of a post' })
+  @ApiParam({ name: 'id', type: String, description: 'Id of a post' })
   @ApiOkResponse({
     type: PostDto,
     description: 'Return information of a post',
   })
-  @ApiNotFoundResponse({ description: ' Post uuid is Not Found' })
+  @ApiNotFoundResponse({ description: ' Post id is Not Found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   async getPost(@Param() { id }: PostIdDto): Promise<PostDto> {
     return await this.postService.getPost(id);
@@ -76,7 +76,7 @@ export class PostController {
     description: 'Return information of a created post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
-  @ApiNotFoundResponse({ description: 'User uuid is not found' })
+  @ApiNotFoundResponse({ description: 'User id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -99,8 +99,8 @@ export class PostController {
     description: 'Return information of a updated post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
-  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
-  @ApiNotFoundResponse({ description: 'Post uuid is not found' })
+  @ApiForbiddenResponse({ description: 'User id is not matched' })
+  @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -112,7 +112,7 @@ export class PostController {
     return await this.postService.updatePost(id, postDto, req.user);
   }
 
-  @Patch(':id')
+  @Post(':id')
   @ApiOperation({
     summary: 'Join Post',
     description: 'User Join Post',
@@ -123,7 +123,7 @@ export class PostController {
     description: 'Return information of a updated post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
-  @ApiNotFoundResponse({ description: 'Post uuid is not found' })
+  @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -134,20 +134,20 @@ export class PostController {
     return await this.postService.joinPost(id, req.user);
   }
 
-  @Patch(':postId/participant/:userId')
+  @Delete(':postId/participant/:userId')
   @ApiOperation({
     summary: 'Exit Post',
     description: 'Exit post by user of author',
   })
-  @ApiParam({ name: 'postUuid', type: String })
-  @ApiParam({ name: 'userUuid', type: String })
+  @ApiParam({ name: 'postId', type: String })
+  @ApiParam({ name: 'userId', type: String })
   @ApiOkResponse({
     type: PostDto,
     description: 'Return information of a deleted post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
-  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
-  @ApiNotFoundResponse({ description: 'Post uuid is not found' })
+  @ApiForbiddenResponse({ description: 'User id is not matched' })
+  @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -170,8 +170,8 @@ export class PostController {
     description: 'Return information of a deleted post',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
-  @ApiForbiddenResponse({ description: 'User uuid is not matched' })
-  @ApiNotFoundResponse({ description: 'Post uuid is not found' })
+  @ApiForbiddenResponse({ description: 'User id is not matched' })
+  @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

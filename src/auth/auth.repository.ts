@@ -50,7 +50,7 @@ export class AuthRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025') {
-            throw new NotFoundException('User uuid is not found');
+            throw new NotFoundException('User id is not found');
           }
           throw new InternalServerErrorException('Database Error');
         }
@@ -62,7 +62,7 @@ export class AuthRepository {
     return await this.prisma.user
       .findUnique({ where: { id: payload.id } })
       .then((user) => {
-        if (!user) throw new NotFoundException('User uuid is not found');
+        if (!user) throw new NotFoundException('User id is not found');
         return user;
       });
   }
@@ -76,7 +76,7 @@ export class AuthRepository {
       .catch((error) => {
         if (error instanceof PrismaClientKnownRequestError) {
           if (error.code === 'P2025') {
-            throw new NotFoundException('User uuid is not found');
+            throw new NotFoundException('User id is not found');
           }
           throw new InternalServerErrorException('Database Error');
         }

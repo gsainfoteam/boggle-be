@@ -19,8 +19,7 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UserDto } from 'src/auth/dto/user.dto';
-import { uuidDto } from './dto/uuid.dto';
+import { UserDto, UserIdDto } from 'src/auth/dto/user.dto';
 import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { PayloadDto } from 'src/auth/dto/payload.dto';
@@ -44,11 +43,11 @@ export class UserController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user', description: 'Get user by ID' })
-  @ApiParam({ name: 'id', type: String, description: 'Uuid of a user' })
+  @ApiParam({ name: 'id', type: String, description: 'Id of a user' })
   @ApiOkResponse({ type: UserDto, description: 'Return user information' })
   @ApiNotFoundResponse({ description: 'User Not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
-  async findUser(@Param() { id }: uuidDto): Promise<UserDto> {
+  async findUser(@Param() { id }: UserIdDto): Promise<UserDto> {
     return this.userService.findUser(id);
   }
 
@@ -77,7 +76,7 @@ export class UserController {
     description: 'Delete user information in db',
   })
   @ApiOkResponse({
-    type: uuidDto,
+    type: UserIdDto,
     description: 'Return deleted user information',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized Exception' })
