@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PostFullContent } from './types/postFullContent';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListQueryDto } from './dto/postList.dto';
 import { PostType } from '@prisma/client';
@@ -119,20 +118,41 @@ export class PostRepository {
       });
   }
 
-  async updatePost(
-    id: string,
-    { title, content, type, tags, maxParticipants, deadline }: CreatePostDto,
-  ) {
+  async updatePost(id: string, post: CreatePostDto) {
     return await this.prisma.post
       .update({
         where: { id: id },
         data: {
-          title: title,
-          content: content,
-          type: type,
-          tags: tags,
-          maxParticipants: maxParticipants,
-          deadline: deadline,
+          title: post.title,
+          content: post.content,
+          type: post.type,
+          tags: post.tags,
+          maxParticipants: post.maxParticipants,
+          deadline: post.deadline,
+          ...(post.type === 'ROOMMATE' &&
+            post.roommateDetails && {
+              roommateDetails: {
+                create: {
+                  grade: post.roommateDetails.grade,
+                  room: post.roommateDetails.room,
+                  semester: post.roommateDetails.semester,
+
+                  refrigerator: post.roommateDetails.refrigerator,
+                  wifi: post.roommateDetails.wifi,
+                  snoring: post.roommateDetails.snoring,
+                  smoking: post.roommateDetails.smoking,
+                  sleepTime: post.roommateDetails.sleepTime,
+                  wakeUpTime: post.roommateDetails.wakeUpTime,
+                  mbti: post.roommateDetails.mbti,
+
+                  rmRefrigerator: post.roommateDetails.rmRefrigerator,
+                  rmWifi: post.roommateDetails.rmWifi,
+                  rmSnoring: post.roommateDetails.rmSnoring,
+                  rmSmoking: post.roommateDetails.rmSmoking,
+                  rmMbti: post.roommateDetails.rmMbti,
+                },
+              },
+            }),
         },
       })
       .catch((error) => {
