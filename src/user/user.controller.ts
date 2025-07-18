@@ -19,10 +19,11 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UserDto, UserIdDto } from 'src/auth/dto/user.dto';
+import { UserDto } from 'src/auth/dto/user.dto';
 import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { PayloadDto } from 'src/auth/dto/payload.dto';
+import { UserIdDto } from './dto/userId.dto';
 
 @Controller('user')
 export class UserController {

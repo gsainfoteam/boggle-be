@@ -9,9 +9,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PostType } from '@prisma/client';
-import { UserDto } from './User.dto';
 import { Type } from 'class-transformer';
 import { RoommatePostDto } from './roommatePost.dto';
+import { basicUserDto } from './basicUser.dto';
 
 export class PostDto {
   @IsString()
@@ -35,12 +35,12 @@ export class PostDto {
   readonly tags: string[];
 
   @IsString()
-  @ApiProperty({ example: UserDto })
-  readonly author: UserDto;
+  @ApiProperty({ example: basicUserDto })
+  readonly author: basicUserDto;
 
   @IsArray()
-  @ApiProperty({ type: [UserDto] })
-  readonly participants: UserDto[];
+  @ApiProperty({ type: [basicUserDto] })
+  readonly participants: basicUserDto[];
 
   @IsNumber()
   @ApiProperty({ example: 5 })
