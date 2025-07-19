@@ -498,7 +498,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private async authenticateSocket(socket: Socket): Promise<UserPayload> {
     try {
-      console.log(socket.handshake.headers);
       const token: string = socket.handshake.headers.token as string;
       const userPayload = this.jwtService.verify<UserPayload>(token, {
         secret: process.env.JWT_SECRET,
