@@ -539,17 +539,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     socket.disconnect();
   }
 
-  private extractJwtToken(socket: Socket): string {
-    const token = socket.handshake.auth.token as string;
-
-    if (!token) {
-      throw new UnauthorizedException(
-        'No authentication token provided via handshake.auth.',
-      );
-    }
-    return token;
-  }
-
   private verifyUserAuthorization(members: User[], userId: string): void {
     const isMember = members.some((member) => member.uuid === userId);
     if (!isMember) {

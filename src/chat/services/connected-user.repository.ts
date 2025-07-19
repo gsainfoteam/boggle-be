@@ -16,7 +16,6 @@ export class ConnectedUserRepository {
       return await this.prisma.connectedUser.create({
         data: {
           userId: userPayload.uuid,
-          email: userPayload.email,
           socketId: socketId,
           joinedAt: new Date(),
         },
