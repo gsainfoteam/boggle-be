@@ -101,7 +101,6 @@ model ConnectedUser {
   id        String @id @default(uuid())
   user      User   @relation("ChatUser", fields: [userId], references: [id])
   userId    String  
-  email     String 
   socketId  String @unique
   joinedAt  DateTime @default(now())
 }
