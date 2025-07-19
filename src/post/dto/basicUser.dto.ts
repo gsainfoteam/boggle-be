@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 
-export class participantDto {
+export class basicUserDto {
   @IsString()
-  @ApiProperty({ example: '2d87779b-7632-4163-afa0-5062d83e325b' })
-  readonly uuid: string;
+  @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
+  readonly id: string;
 
   @IsString()
   @ApiProperty({ example: 'John Doe' })

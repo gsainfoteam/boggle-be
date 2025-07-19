@@ -6,7 +6,7 @@ import { PostDto } from 'src/post/dto/post.dto';
 export class UserDto {
   @IsString()
   @ApiProperty({ example: '2d87779b-7632-4163-afa0-5062d83e325b' })
-  readonly uuid: string;
+  readonly id: string;
 
   @IsString()
   @ApiProperty({ example: '홍길동' })

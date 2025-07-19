@@ -39,8 +39,8 @@
   model User {
     uuid            String @id @default(uuid())
 
-    email           String  @unique
-    password        String
+  email           String  @unique
+  password        String
 
     name            String
     studentId       Int
@@ -65,20 +65,22 @@
   model Post {
     uuid            String @id @default(uuid())
 
-    title           String
-    content         String 
+  title           String
+  content         String 
 
-    postType        PostType 
-    tags            String[]
+  type              PostType 
+  roommateDetails   RoommateDetails? @relation("RoommateDetails")
 
-    author          User @relation("UserPosts", fields: [authorId], references: [uuid])
-    authorId        String
+  tags            String[]
 
-    participants    User[]  @relation("PostParticipants")
-    maxParticipants Int
+  author          User @relation("UserPosts", fields: [authorId], references: [id])
+  authorId        String
 
-    createdAt       DateTime  @default(now())
-    deadline        DateTime
+  participants    User[]  @relation("PostParticipants")
+  maxParticipants Int
+
+  createdAt       DateTime  @default(now())
+  deadline        DateTime
 
     status          PostStatus  @default(OPEN)
   }
