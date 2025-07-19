@@ -86,10 +86,8 @@
   model ConnectedUser{
     uuid      String  @id @default(uuid())
 
-    user      User    @relation("ChatUser", fields: [userId, email], references: [uuid, email])
-    userId    String  
-    email     String
-    
+    user      User    @relation("ChatUser", fields: [userId], references: [uuid])
+    userId    String      
 
     socketId  String     @unique
     joinedAt  DateTime   @default(now())
