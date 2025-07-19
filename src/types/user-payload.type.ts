@@ -1,4 +1,4 @@
 export type UserPayload = {
-  uuid: string;
+  id: string;
   email: string;
 };

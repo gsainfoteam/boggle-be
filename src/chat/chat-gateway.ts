@@ -50,6 +50,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(socket: Socket): Promise<void> {
     try {
       const userPayload = await this.authenticateSocket(socket);
+      console.log(userPayload);
       await this.initializeUserConnection(userPayload, socket);
     } catch (error) {
       this.handleConnectionError(socket, error);
@@ -77,12 +78,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.validateRoomTypeAndParticipants(
         createRoomDto.roomType,
         createRoomDto.participantsId,
-        currentUser.uuid,
+        currentUser.id,
       );
 
       const newRoom = await this.roomService.createRoom({
         ...createRoomDto,
-        hostId: currentUser.uuid,
+        hostId: currentUser.id,
       });
 
       const createdRoomWithDetails = await this.roomService.findRoomById(
@@ -110,7 +111,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     roomFetchRequestDto: { roomId: string },
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    const { uuid: userId } = currentUser;
+    const { id: userId } = currentUser;
     const { roomId } = roomFetchRequestDto;
 
     try {
@@ -143,7 +144,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const room = await this.roomService.findRoomById(updateRoomDto.roomId);
 
-      if (room.hostId !== currentUser.uuid) {
+      if (room.hostId !== currentUser.id) {
         throw new WsException('Only the host can update the room.');
       }
 
@@ -153,7 +154,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const updatedRoom = await this.roomService.updateRoom(
         updateRoomDto,
-        currentUser.uuid,
+        currentUser.id,
       );
 
       await this.notifyRoomParticipants(
@@ -178,7 +179,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe()) roomJoinDto: { roomId: string },
   ): Promise<void> {
-    const { uuid: userId } = currentUser;
+    const { id: userId } = currentUser;
     const { roomId } = roomJoinDto;
 
     try {
@@ -208,7 +209,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody(new WsValidationPipe())
     assignUsersDto: { roomId: string; participantsId: string[] },
   ): Promise<void> {
-    const { uuid: userId } = currentUser;
+    const { id: userId } = currentUser;
     const { roomId, participantsId } = assignUsersDto;
 
     try {
@@ -253,7 +254,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe()) roomLeaveDto: { roomId: string },
   ): Promise<void> {
-    const { uuid: userId } = currentUser;
+    const { id: userId } = currentUser;
     const { roomId } = roomLeaveDto;
 
     try {
@@ -282,7 +283,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody(new WsValidationPipe())
     deleteUsersDto: { roomId: string; participantsId: string[] },
   ): Promise<void> {
-    const { uuid: userId } = currentUser;
+    const { id: userId } = currentUser;
     const { roomId, participantsId } = deleteUsersDto;
 
     try {
@@ -327,13 +328,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe()) deleteRoomDto: DeleteRoomDto,
   ): Promise<void> {
-    const { uuid: userId } = currentUser;
+    const { id: userId } = currentUser;
     const { roomId } = deleteRoomDto;
 
     try {
       const roomToDelete = await this.roomService.deleteRoom(
         roomId,
-        currentUser.uuid,
+        currentUser.id,
       );
 
       await this.notifyRoomParticipants(
@@ -359,7 +360,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe()) createMessageDto: CreateMessageDto,
   ): Promise<void> {
-    const userId = currentUser.uuid;
+    const userId = currentUser.id;
     const { roomId } = createMessageDto;
 
     try {
@@ -399,7 +400,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody(new WsValidationPipe()) filterMessageDto: FilterMessageDto,
     @ConnectedSocket() socket: Socket,
   ): Promise<void> {
-    const { uuid: userId } = currentUser;
+    const { id: userId } = currentUser;
     const { roomId } = filterMessageDto;
 
     try {
@@ -429,7 +430,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe()) updateMessageDto: UpdateMessageDto,
   ): Promise<void> {
-    const userId = currentUser.uuid;
+    const userId = currentUser.id;
 
     try {
       const updatedMessage = await this.messageService.updateMessage(
@@ -465,7 +466,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe()) deleteMessageDto: DeleteMessageDto,
   ): Promise<void> {
-    const userId = currentUser.uuid;
+    const userId = currentUser.id;
     const { roomId, messageIds } = deleteMessageDto;
 
     try {
@@ -527,10 +528,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     socket.data.user = userPayload;
     await this.connectedUserService.createConnectedUser(userPayload, socket.id);
 
-    const rooms = await this.roomService.findByUserId(userPayload.uuid);
+    const rooms = await this.roomService.findByUserId(userPayload.id);
     this.server.to(socket.id).emit('userAllRooms', rooms);
     this.logger.log(
-      `Client connected: ${socket.id} - User ID: ${userPayload.uuid}`,
+      `Client connected: ${socket.id} - User ID: ${userPayload.id}`,
     );
   }
 
@@ -654,22 +655,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         },
       );
 
-      if (refreshPayload.uuid !== currentUser.uuid) {
+      if (refreshPayload.id !== currentUser.id) {
         throw new WsException('Invalid refresh token.');
       }
 
       const newAccessToken = this.jwtService.sign(
-        { uuid: currentUser.uuid, email: currentUser.email },
+        { uuid: currentUser.id, email: currentUser.email },
         { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '1h' },
       );
 
       socket.emit('tokenRefreshed', { accessToken: newAccessToken });
       this.logger.log(
-        `Token refreshed successfully for User ID ${currentUser.uuid}`,
+        `Token refreshed successfully for User ID ${currentUser.id}`,
       );
     } catch (error) {
       this.logger.error(
-        `Token refresh failed for User ID ${currentUser.uuid}: ${error.message}`,
+        `Token refresh failed for User ID ${currentUser.id}: ${error.message}`,
         error.stack,
       );
       throw new WsException('Error occurred while refreshing token.');

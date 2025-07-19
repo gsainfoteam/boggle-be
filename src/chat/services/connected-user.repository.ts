@@ -15,14 +15,14 @@ export class ConnectedUserRepository {
     try {
       return await this.prisma.connectedUser.create({
         data: {
-          userId: userPayload.uuid,
+          userId: userPayload.id,
           socketId: socketId,
           joinedAt: new Date(),
         },
       });
     } catch (error) {
       this.logger.error(
-        `Create failed for user ${userPayload.uuid}`,
+        `Create failed for user ${userPayload.id}`,
         error.stack,
       );
       if (error instanceof PrismaClientKnownRequestError) {

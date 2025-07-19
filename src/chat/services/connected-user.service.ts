@@ -13,7 +13,7 @@ export class ConnectedUserService {
     userPayload: UserPayload,
     socketId: string,
   ): Promise<ConnectedUser> {
-    if (!userPayload.uuid) {
+    if (!userPayload.id) {
       throw new WsException('User id is required');
     }
 
