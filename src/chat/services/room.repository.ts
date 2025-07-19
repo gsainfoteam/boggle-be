@@ -11,7 +11,7 @@ export class RoomRepository {
 
     constructor(private prisma: PrismaService) { }
 
-    async create({ name, hostId, romType, participantsId }: CreateRoomDto) {
+    async create({ name, hostId, roomType, participantsId }: CreateRoomDto) {
         try {
 
              const allMemberIds = [hostId, ...participantsId];
@@ -19,9 +19,9 @@ export class RoomRepository {
             return await this.prisma.room.create({
                 data: {
                     hostId: hostId,
-                    roomType: romType,
+                    roomType: roomType,
                     name: name,
-                    members: { connect: allMemberIds.map(id => ({ uuid: id }))},
+                    members: { connect: allMemberIds.map(id => ({ id: id }))},
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 },
@@ -40,7 +40,7 @@ export class RoomRepository {
         try {
             return await this.prisma.room.findUniqueOrThrow({
                 where: {
-                    uuid: roomId
+                    id: roomId
                 },
                 include: {
                     members: true
@@ -62,7 +62,7 @@ export class RoomRepository {
     async update({ roomId, name, }: UpdateRoomDto) {
         try {
             return await this.prisma.room.update({
-                where: { uuid: roomId },
+                where: { id: roomId },
                 data: {
                     name: name,
                     updatedAt: new Date(),
@@ -88,7 +88,7 @@ export class RoomRepository {
         try {
             return await this.prisma.room.delete({
                 where: {
-                    uuid: roomID
+                    id: roomID
                 },
                 include: {
                     members: true
@@ -110,10 +110,10 @@ export class RoomRepository {
     async joinRoom(roomId: string, userId: string) {
         try {
             return await this.prisma.room.update({
-                where: { uuid: roomId },
+                where: { id: roomId },
                 data: {
                     members: {
-                        connect: { uuid: userId }
+                        connect: { id: userId }
                     }
                 },
                 include: {
@@ -136,10 +136,10 @@ export class RoomRepository {
     async leaveRoom(roomId: string, userId: string) {
         try {
             return await this.prisma.room.update({
-                where: { uuid: roomId },
+                where: { id: roomId },
                 data: {
                     members: {
-                        disconnect: { uuid: userId }
+                        disconnect: { id: userId }
                     }
                 },
                 include: {
@@ -165,7 +165,7 @@ export class RoomRepository {
                 where: {
                     members: { 
                         some: { 
-                            uuid: userId, 
+                            id: userId, 
                         },
                     },
                 },
@@ -188,10 +188,10 @@ export class RoomRepository {
     async assignUsers({ roomId, participantsId }: AssignUsersDto) {
         try {
             return await this.prisma.room.update({
-                where: { uuid: roomId },
+                where: { id: roomId },
                 data: {
                     members: {
-                        connect: participantsId.map((id) => ({ uuid: id }))
+                        connect: participantsId.map((id) => ({ id: id }))
                     }
                 },
                 include: {
@@ -214,10 +214,10 @@ export class RoomRepository {
     async deleteUsers({roomId, participantsId}: DeleteUsersDto) {
         try {
             return await this.prisma.room.update({
-                where: { uuid: roomId },
+                where: { id: roomId },
                 data: {
                     members: {
-                        disconnect: participantsId.map((id) => ({ uuid: id }))
+                        disconnect: participantsId.map((id) => ({ id: id }))
                     }
                 },
                 include: {

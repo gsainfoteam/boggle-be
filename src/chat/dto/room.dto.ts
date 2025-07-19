@@ -17,7 +17,7 @@ export class CreateRoomDto {
 
   @ApiProperty({ required: true, enum: RoomTypeEnum })
   @IsNotEmpty()
-  romType: RoomTypeEnum;
+  roomType: RoomTypeEnum;
 
   @ApiProperty({ required: false, type: String, isArray: true })
   @IsNotEmpty()

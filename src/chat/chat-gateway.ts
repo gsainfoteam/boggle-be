@@ -6,7 +6,7 @@ import { UserPayload } from 'src/types/user-payload.type';
 import { ConnectedUserService } from './services/connected-user.service';
 import { RoomService } from './services/room.service';
 import { WsExceptionFilter } from './common/filters/ws-exception.filter';
-import { RoomType, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { WsCurrentUser } from './common/decorators/ws-currentuser.decorator';
 import { RoomTypeEnum } from './common/enums/room-type.enum';  
 import { MessageService } from './services/message.service';
@@ -14,7 +14,6 @@ import { WsValidationPipe } from './common/pipes/ws-validation.pipe';
 import { CreateRoomDto, DeleteRoomDto, UpdateRoomDto } from './dto/room.dto';
 import { CreateMessageDto, DeleteMessageDto, FilterMessageDto, UpdateMessageDto } from './dto/message.dto';
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
-import { verify } from 'crypto';
 
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway(3002, { cors: { origin: '*' } })
@@ -59,7 +58,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ): Promise<void> {
         try {
             this.validateRoomTypeAndParticipants(
-                createRoomDto.romType,
+                createRoomDto.roomType,
                 createRoomDto.participantsId,
                 currentUser.uuid,
             );
@@ -69,7 +68,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 hostId: currentUser.uuid,
             });
 
-            const createdRoomWithDetails = await this.roomService.findRoomById(newRoom.uuid);
+            const createdRoomWithDetails = await this.roomService.findRoomById(newRoom.id);
 
             await this.notifyRoomParticipants(
                 createdRoomWithDetails.members, 
@@ -77,7 +76,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 createdRoomWithDetails,
             );
             this.logger.log(
-                `Room with UUID ${newRoom.uuid} created and participants notified successfully.`,
+                `Room with UUID ${newRoom.id} created and participants notified successfully.`,
             );
         } catch (error) {
             this.logger.error(`Failed to create room: ${error.message}`, error.stack);
@@ -96,14 +95,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         try {
             const room = await this.roomService.findRoomById(roomId);
-            const isMember = room.members.some(member => member.uuid === userId);
+            const isMember = room.members.some(member => member.id === userId);
             if (!isMember) {
                 throw new WsException('Access Denied: You are not a member of this room.');
             }
 
             client.emit('roomDetailsFetched', room);
             this.logger.log(
-                `User ID ${userId} fetched details for Room UUID ${room.uuid} successfully.`,
+                `User ID ${userId} fetched details for Room UUID ${room.id} successfully.`,
             );
         } catch (error) {
             this.logger.error(
@@ -171,7 +170,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 { userId, roomId },
             );
             this.logger.log(
-                `User ID ${userId} joined Room UUID ${room.uuid} successfully.`,
+                `User ID ${userId} joined Room UUID ${room.id} successfully.`,
             );
         } catch (error) {
             this.logger.error(
@@ -237,7 +236,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 { userId, roomId },
             );
             this.logger.log(
-                `User ID ${userId} left Room UUID ${room.uuid} successfully.`,
+                `User ID ${userId} left Room UUID ${room.id} successfully.`,
             );
         } catch (error) {
             this.logger.error(
@@ -296,7 +295,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             const roomToDelete = await this.roomService.deleteRoom(roomId, currentUser.uuid);
 
             await this.notifyRoomParticipants(
-                roomToDelete.members.filter(member => member.uuid !== userId),
+                roomToDelete.members.filter(member => member.id !== userId),
                 'roomDeleted',
                 { message: `Room with UUID ${roomId} has been successfully deleted.` },
             );
@@ -323,7 +322,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         try {
             const room = await this.roomService.findRoomById(roomId);
-            const isMember = room.members.some(member => member.uuid === userId);
+            const isMember = room.members.some(member => member.id === userId);
             if (!isMember) {
                 throw new WsException('Access Denied: You are not a member of this room.');
             }
@@ -361,7 +360,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         try {
             const room = await this.roomService.findRoomById(roomId);
-            const isMember = room.members.some(member => member.uuid === userId);
+            const isMember = room.members.some(member => member.id === userId);
             if (!isMember) {
                 throw new WsException('Access Denied: You are not a member of this room.');
             }
@@ -418,7 +417,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         try {
             const room = await this.roomService.findRoomById(roomId);
-            const isMember = room.members.some(member => member.uuid === userId);
+            const isMember = room.members.some(member => member.id === userId);
             if (!isMember) {
                 throw new WsException('Access Denied: You are not a member of this room.');
             }
@@ -443,7 +442,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     private async authenticateSocket(socket: Socket): Promise<UserPayload> {
         try {
-            const token = this.extractJwtToken(socket);
+            const token: string = socket.handshake.headers.token as string
+            if (!token) {
+            throw new UnauthorizedException('No authentication token provided via handshake.auth.');
+                }
             const userPayload = this.jwtService.verify<UserPayload>(token, {
                 secret: process.env.JWT_SECRET,
             });
@@ -490,7 +492,7 @@ private extractJwtToken(socket: Socket): string {
 }
 
     private verifyUserAuthorization(members: User[], userId: string): void {
-        const isMember = members.some(member => member.uuid === userId);
+        const isMember = members.some(member => member.id === userId);
         if (!isMember) {
             throw new WsException(
                 `Operation failed: You are not authorized to perform this action.`,
@@ -533,7 +535,7 @@ private extractJwtToken(socket: Socket): string {
         payload: any,
     ): Promise<void> {
         const connectedUsers = await this.connectedUserService.findConnectedUsersByUserIds(
-            members.map(member => member.uuid),
+            members.map(member => member.id),
         );
 
         const notificationPromises = connectedUsers.map(user => ({

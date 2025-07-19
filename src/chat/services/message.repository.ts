@@ -51,7 +51,7 @@ export class MessageRepository {
   async getMessage(uuid: string) {
     try {
       return await this.prisma.message.findUniqueOrThrow({
-        where: { uuid: uuid },
+        where: { id: uuid },
       });
     } catch (error) {
       this.logger.error(`Failed to get message with UUID: ${uuid}`, error.stack);
@@ -68,7 +68,7 @@ export class MessageRepository {
   async updateMessage({ messageId, content }: UpdateMessageDto) {
     try {
       return await this.prisma.message.update({
-        where: { uuid: messageId },
+        where: { id: messageId },
         data: {
           content: content,
           updatedAt: new Date(),
@@ -90,7 +90,7 @@ export class MessageRepository {
     try{
       const messages = await this.prisma.message.findMany({
         where:{
-            uuid: {in: deleteMessageDto.messageIds},
+            id: {in: deleteMessageDto.messageIds},
         },
       })
 
@@ -99,14 +99,14 @@ export class MessageRepository {
         throw new WsException('You can delete only your own messages.')
       }
 
-      const notFoundIds = deleteMessageDto.messageIds.filter(id => !messages.find(msg => msg.uuid === id));
+      const notFoundIds = deleteMessageDto.messageIds.filter(id => !messages.find(msg => msg.id === id));
       if(notFoundIds.length > 0){
         throw new WsException(`Messages not found IDs: ${notFoundIds.join(', ')}`)
       }
 
       const result = await this.prisma.message.deleteMany({
         where: {
-          uuid: {in: deleteMessageDto.messageIds},
+          id: {in: deleteMessageDto.messageIds},
           senderId: userId,
         }
       })

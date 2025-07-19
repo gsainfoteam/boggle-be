@@ -3,12 +3,17 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { UserDto } from 'src/auth/dto/user.dto';
+import { plainToInstance } from 'class-transformer';
+import * as bcrypt from 'bcryptjs';
 import { UpdateUserDto } from './dto/updateUser.dto';
-import { UserRepository } from './user.repository';
+import { PostDto } from 'src/post/dto/post.dto';
+
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private prisma: PrismaService) {}
 
   async findUser(id: string): Promise<UserDto> {
     const user = await this.prisma.user.findUnique({

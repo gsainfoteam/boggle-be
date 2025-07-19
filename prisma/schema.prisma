@@ -1,127 +1,130 @@
-  // This is your Prisma schema file,
-  // learn more about it in the docs: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-  // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-  // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+generator client {
+  provider = "prisma-client-js"
+}
 
-  generator client {
-    provider = "prisma-client-js"
-  }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-  }
+enum PostType {
+  STUDY
+  HOBBY
+  PROJECT
+  DELIVERY
+  ROOMMATE
+}
 
-  enum PostType{
-    STUDY
-    HOBBY
-    PROJECT
-    DELIVERY
-    ROOMMATE
-  }
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
 
-  enum UserStatus{
-    ACTIVE
-    INACTIVE
-  }
+enum PostStatus {
+  OPEN
+  CLOSED
+}
 
-  enum PostStatus{
-    OPEN
-    CLOSED
-  }
+enum RoomType {
+  GROUP
+  PRIVATE
+}
 
-  enum RoomType{
-    GROUP
-    PRIVATE
-  }
-
-  model User {
-    uuid            String @id @default(uuid())
-
-  email           String  @unique
+model User {
+  id              String @id @default(uuid())
+  email           String @unique
   password        String
+  name            String
+  studentId       Int
+  major           String 
+  refreshToken    String?
+  age             Int?
+  gender          String?
+  
+  // Post relationships
+  posts           Post[]   @relation("UserPosts")
+  joinedPosts     Post[]   @relation("PostParticipants")
+  
+  // Chat relationships
+  connectedUsers  ConnectedUser[] @relation("ChatUser")
+  joinedRooms     Room[]   @relation("RoomMembers")
+  hostedRooms     Room[]   @relation("RoomHost")
+  messages        Message[] @relation("UserMessages")
+  
+  status          UserStatus @default(ACTIVE)
+}
 
-    name            String
-    studentId       Int
-    major           String 
-    connectedUsers   ConnectedUser[]  @relation("ChatUser")
-
-    refreshToken    String?
-    
-    posts           Post[]   @relation("UserPosts")
-    joinedPosts     Post[]   @relation("PostParticipants")
-
-    joinedRooms     Room[]   @relation("RoomMembers")
-    hostedRooms     Room[]   @relation("RoomHost")
-
-    messages  Message[]  @relation("UserMessages")
-
-    status          UserStatus @default(ACTIVE)
-
-    @@unique([uuid, email])
-  }
-
-  model Post {
-    uuid            String @id @default(uuid())
-
+model Post {
+  id              String @id @default(uuid())
   title           String
   content         String 
-
-  type              PostType 
-  roommateDetails   RoommateDetails? @relation("RoommateDetails")
-
+  type            PostType 
+  roommateDetails RoommateDetails? @relation("RoommateDetails")
   tags            String[]
-
   author          User @relation("UserPosts", fields: [authorId], references: [id])
   authorId        String
-
   participants    User[]  @relation("PostParticipants")
   maxParticipants Int
-
-  createdAt       DateTime  @default(now())
+  createdAt       DateTime @default(now())
   deadline        DateTime
+  status          PostStatus @default(OPEN)
+}
 
-    status          PostStatus  @default(OPEN)
-  }
+model RoommateDetails {
+  id              String @id @default(uuid())
+  grade           Int
+  room            String
+  semester        String
+  refrigerator    Boolean
+  wifi            Boolean 
+  snoring         Boolean
+  smoking         Boolean
+  sleepTime       String
+  wakeUpTime      String
+  mbti            String
+  rmRefrigerator  Boolean
+  rmWifi          Boolean
+  rmSnoring       Boolean
+  rmSmoking       Boolean
+  rmMbti          String
+  
+  post            Post @relation("RoommateDetails", fields: [postId], references: [id])
+  postId          String @unique
+}
 
-  model ConnectedUser{
-    uuid      String  @id @default(uuid())
+model ConnectedUser {
+  id        String @id @default(uuid())
+  user      User   @relation("ChatUser", fields: [userId], references: [id])
+  userId    String  
+  email     String 
+  socketId  String @unique
+  joinedAt  DateTime @default(now())
+}
 
-    user      User    @relation("ChatUser", fields: [userId, email], references: [uuid, email])
-    userId    String  
-    email     String
-    
+model Message {
+  id        String @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sender    User @relation("UserMessages", fields: [senderId], references: [id])
+  senderId  String
+  room      Room @relation("RoomMessages", fields: [roomId], references: [id])
+  roomId    String
+}
 
-    socketId  String     @unique
-    joinedAt  DateTime   @default(now())
-  }
-
-  model Message{
-    uuid           String @id @default(uuid())
-
-    content        String
-    createdAt      DateTime    @default(now())
-    updatedAt      DateTime    @updatedAt
-
-    sender         User @relation("UserMessages", fields: [senderId], references: [uuid])
-    senderId       String
-    room           Room       @relation("RoomMessages", fields: [roomId], references: [uuid])
-    roomId         String
-  }
-
-  model Room{
-    uuid          String @id @default(uuid())
-
-    host          User   @relation("RoomHost", fields:[hostId], references:[uuid])
-    hostId        String
-
-    name          String
-    roomType      RoomType
-
-    members       User[] @relation("RoomMembers")
-    messages      Message[]    @relation("RoomMessages")
-
-    createdAt      DateTime    @default(now())
-    updatedAt      DateTime    @updatedAt
-  }
+model Room {
+  id        String @id @default(uuid())
+  host      User   @relation("RoomHost", fields: [hostId], references: [id])
+  hostId    String
+  name      String
+  roomType  RoomType
+  members   User[] @relation("RoomMembers")
+  messages  Message[] @relation("RoomMessages")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
