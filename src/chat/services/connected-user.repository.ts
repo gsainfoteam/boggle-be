@@ -7,12 +7,9 @@ import { UserPayload } from 'src/types/user-payload.type';
 
 @Injectable()
 export class ConnectedUserRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(userPayload: UserPayload, socketId: string): Promise<ConnectedUser> {
-    if (!userPayload.id) {
-      throw new WsException('User id is required');
-    }
 
     try {
       return await this.prisma.connectedUser.create({
@@ -43,8 +40,15 @@ export class ConnectedUserRepository {
     }
   }
 
-   async deleteAll(): Promise<{ count: number }> {
-    return await this.prisma.connectedUser.deleteMany();
+  async deleteAll(): Promise<{ count: number }> {
+    try {
+      return await this.prisma.connectedUser.deleteMany();
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new WsException(`Database error: ${error.message}`);
+      }
+      throw new WsException('Failed to delete all connected users');
+    }
   }
 
   async findByUserIds(userIds: string[]): Promise<ConnectedUser[]> {

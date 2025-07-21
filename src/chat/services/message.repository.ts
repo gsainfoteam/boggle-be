@@ -18,18 +18,20 @@ export class MessageRepository {
     deletedAt: null,
   };
 
-  private readonly baseWhereDeletedMessage = {
-    isDeleted: false,
-    deletedAt: null,
-  };
-
   async createMessage({ roomId, content, senderId }: CreateMessageDto): Promise<Message> {
-    const isRoomExisting = await this.prisma.room.findFirstOrThrow({
-      where: {
-        id: roomId,
-        ...this.baseWhereDeleted,
+    try {
+      await this.prisma.room.findFirstOrThrow({
+        where: {
+          id: roomId,
+          ...this.baseWhereDeleted,
+        }
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new WsException('Room not found or has been deleted');
       }
-    });
+      throw error;
+    }
 
     try {
       return await this.prisma.message.create({
@@ -50,23 +52,30 @@ export class MessageRepository {
   }
 
   async findByRoomId(roomId: string): Promise<Message[]> {
-    const room = await this.prisma.room.findFirstOrThrow({
-      where: {
-        id: roomId,
-        ...this.baseWhereDeleted,
+    try {
+      await this.prisma.room.findFirstOrThrow({
+        where: {
+          id: roomId,
+          ...this.baseWhereDeleted,
+        }
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new WsException('Room not found or has been deleted');
       }
-    });
+      throw error;
+    }
 
     return await this.prisma.message.findMany({
-      where: { 
+      where: {
         roomId,
-        ...this.baseWhereDeletedMessage
+        ...this.baseWhereDeleted
       },
-      include: { 
+      include: {
         sender: true,
       },
       orderBy: {
-        createdAt: 'asc' 
+        createdAt: 'asc'
       }
     });
   }
@@ -74,9 +83,9 @@ export class MessageRepository {
   async getMessage(uuid: string): Promise<Message> {
     try {
       return await this.prisma.message.findUniqueOrThrow({
-        where: { 
+        where: {
           id: uuid,
-          ...this.baseWhereDeletedMessage
+          ...this.baseWhereDeleted
         },
       });
     } catch (error) {
@@ -90,9 +99,9 @@ export class MessageRepository {
   async updateMessage({ messageId, content }: UpdateMessageDto): Promise<Message> {
     try {
       return await this.prisma.message.update({
-        where: { 
+        where: {
           id: messageId,
-          ...this.baseWhereDeletedMessage
+          ...this.baseWhereDeleted
         },
         data: {
           content: content,
@@ -118,7 +127,7 @@ export class MessageRepository {
     const messages = await this.prisma.message.findMany({
       where: {
         id: { in: messageIds },
-        ...this.baseWhereDeletedMessage, 
+        ...this.baseWhereDeleted,
       },
     });
 
@@ -139,7 +148,7 @@ export class MessageRepository {
         where: {
           id: { in: messageIds },
           senderId: userId,
-          ...this.baseWhereDeletedMessage, 
+          ...this.baseWhereDeleted,
         },
       });
     } catch (error) {

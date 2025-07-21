@@ -85,23 +85,14 @@ export class UpdateRoomDto {
   name: string;
 }
 
-export class RoomFetchRequestDto{
+export class BaseRoomDto {
   @ApiProperty({required: true})
   @IsString()
   @IsNotEmpty()
-  roomId: string
+  @IsUUID()
+  roomId: string;
 }
 
-export class RoomJoinDto{
-  @ApiProperty({required: true})
-  @IsString()
-  @IsNotEmpty()
-  roomId: string
-}
-
-export class LeaveRoomDto {
-   @ApiProperty({required: true})
-  @IsString()
-  @IsNotEmpty()
-  roomId: string
-}
+export class RoomFetchRequestDto extends BaseRoomDto {}
+export class RoomJoinDto extends BaseRoomDto {}
+export class LeaveRoomDto extends BaseRoomDto {}
