@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateMessageDto,
@@ -11,11 +11,9 @@ import { Message } from '@prisma/client';
 
 @Injectable()
 export class MessageRepository {
-  private readonly logger = new Logger('MessageRepository');
-
   constructor(private prisma: PrismaService) {}
 
-  async createMessage(createMessageDto: CreateMessageDto) {
+  async createMessage(createMessageDto: CreateMessageDto): Promise<Message> {
     try {
       return await this.prisma.message.create({
         data: {
@@ -25,56 +23,34 @@ export class MessageRepository {
         },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to create message: ${JSON.stringify(createMessageDto)}`,
-        error.stack,
-      );
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new WsException('Database error when creating message.');
+        throw new WsException(`Database error: ${error.message}`);
       }
-      throw new WsException('Unexpected error when creating message.');
+      throw new WsException('Failed to create message');
     }
   }
 
   async findByRoomId(roomId: string): Promise<Message[]> {
-    try {
-      return await this.prisma.message.findMany({
-        where: { roomId },
-        include: { sender: true },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to find messages for the room with ID: ${roomId}`,
-        error.stack,
-      );
-      if (error instanceof PrismaClientKnownRequestError) {
-        throw new WsException('Database error when retrieving messages.');
-      }
-      throw new WsException('Unexpected error when retrieving messages.');
-    }
+    return await this.prisma.message.findMany({
+      where: { roomId },
+      include: { sender: true },
+    });
   }
 
-  async getMessage(uuid: string) {
+  async getMessage(uuid: string): Promise<Message> {
     try {
       return await this.prisma.message.findUniqueOrThrow({
         where: { id: uuid },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to get message with UUID: ${uuid}`,
-        error.stack,
-      );
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new WsException('Message not found.');
-        }
-        throw new WsException('Database error when retrieving message.');
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException('Message not found');
       }
-      throw new WsException('Unexpected error when retrieving message.');
+      throw new WsException('Failed to retrieve message');
     }
   }
 
-  async updateMessage({ messageId, content }: UpdateMessageDto) {
+  async updateMessage({ messageId, content }: UpdateMessageDto): Promise<Message> {
     try {
       return await this.prisma.message.update({
         where: { id: messageId },
@@ -84,64 +60,44 @@ export class MessageRepository {
         },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to update message with ID: ${messageId}`,
-        error.stack,
-      );
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new WsException('Message not found.');
-        }
-        throw new WsException('Database error when updating message.');
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException('Message not found');
       }
-      throw new WsException('Unexpected error when updating message.');
+      throw new WsException('Failed to update message');
     }
   }
 
-  async deleteMany(userId: string, deleteMessageDto: DeleteMessageDto) {
+  async deleteMany(userId: string, deleteMessageDto: DeleteMessageDto): Promise<{ count: number }> {
+    const messages = await this.prisma.message.findMany({
+      where: {
+        id: { in: deleteMessageDto.messageIds },
+      },
+    });
+
+    const notOwnedMessages = messages.filter((msg) => msg.senderId !== userId);
+    if (notOwnedMessages.length > 0) {
+      throw new WsException('You can only delete your own messages');
+    }
+
+    const notFoundIds = deleteMessageDto.messageIds.filter(
+      (id) => !messages.find((msg) => msg.id === id),
+    );
+    if (notFoundIds.length > 0) {
+      throw new WsException(`Messages not found: ${notFoundIds.join(', ')}`);
+    }
+
     try {
-      const messages = await this.prisma.message.findMany({
-        where: {
-          id: { in: deleteMessageDto.messageIds },
-        },
-      });
-
-      const notOwnedMessages = messages.filter((msg) => msg.senderId != userId);
-      if (notOwnedMessages.length > 0) {
-        throw new WsException('You can delete only your own messages.');
-      }
-
-      const notFoundIds = deleteMessageDto.messageIds.filter(
-        (id) => !messages.find((msg) => msg.id === id),
-      );
-      if (notFoundIds.length > 0) {
-        throw new WsException(
-          `Messages not found IDs: ${notFoundIds.join(', ')}`,
-        );
-      }
-
-      const result = await this.prisma.message.deleteMany({
+      return await this.prisma.message.deleteMany({
         where: {
           id: { in: deleteMessageDto.messageIds },
           senderId: userId,
         },
       });
-      this.logger.log(
-        `Deleted messages with IDs: ${deleteMessageDto.messageIds.join(', ')}`,
-      );
-      return result;
     } catch (error) {
-      this.logger.error(
-        `Failed to delete messages for user id: ${userId}`,
-        error.stack,
-      );
-      if (error instanceof WsException) {
-        throw error;
-      }
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new WsException('Database error when deleting messages.');
+        throw new WsException(`Database error: ${error.message}`);
       }
-      throw new WsException('Unexpected error when deleting messages.');
+      throw new WsException('Failed to delete messages');
     }
   }
 }

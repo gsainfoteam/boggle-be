@@ -8,9 +8,10 @@ import {
 import { MessageRepository } from './message.repository';
 import { WsException } from '@nestjs/websockets';
 import { Message } from '@prisma/client';
+
 @Injectable()
 export class MessageService {
-  private readonly logger = new Logger('MessageService');
+  private readonly logger = new Logger(MessageService.name);
 
   constructor(private messageRepository: MessageRepository) {}
 
@@ -19,13 +20,10 @@ export class MessageService {
       return await this.messageRepository.createMessage(createMessageDto);
     } catch (error) {
       this.logger.error(
-        `Failed to create message: ${createMessageDto.roomId}`,
+        `Failed to create message in room: ${createMessageDto.roomId}`,
         error.stack,
       );
-      if (error instanceof WsException) {
-        throw error;
-      }
-      throw new WsException('Unexpected error while creating message.');
+      throw error; 
     }
   }
 
@@ -37,21 +35,18 @@ export class MessageService {
       const existingMessage = await this.messageRepository.getMessage(
         updateMessageDto.messageId,
       );
+      
       if (existingMessage.senderId !== userId) {
-        throw new WsException('You can only update your own messages.');
+        throw new WsException('You can only update your own messages');
       }
-      const message =
-        await this.messageRepository.updateMessage(updateMessageDto);
-      return message;
+
+      return await this.messageRepository.updateMessage(updateMessageDto);
     } catch (error) {
       this.logger.error(
-        `Failed to update message with ID: ${updateMessageDto.messageId} for user: ${userId}`,
+        `Failed to update message ${updateMessageDto.messageId} for user ${userId}`,
         error.stack,
       );
-      if (error instanceof WsException) {
-        throw error;
-      }
-      throw new WsException('Unexpected error when updating message.');
+      throw error; 
     }
   }
 
@@ -59,18 +54,17 @@ export class MessageService {
     try {
       const messages = await this.messageRepository.findByRoomId(roomId);
       if (!messages.length) {
-        throw new WsException('No messages found for this room.');
+        this.logger.warn(`No messages found for room: ${roomId}`);
+        return [];
       }
+      
       return messages;
     } catch (error) {
       this.logger.error(
-        `Failed to retrieve messages for room ID ${roomId}: ${error.message}`,
+        `Failed to retrieve messages for room: ${roomId}`,
         error.stack,
       );
-      if (error instanceof WsException) {
-        throw error;
-      }
-      throw new WsException('An error occurred while fetching messages.');
+      throw new WsException('Failed to retrieve room messages');
     }
   }
 
@@ -79,31 +73,31 @@ export class MessageService {
       return await this.messageRepository.getMessage(uuid);
     } catch (error) {
       this.logger.error(
-        `Failed to get message with UUID: ${uuid}`,
+        `Failed to get message: ${uuid}`,
         error.stack,
       );
-      if (error instanceof WsException) {
-        throw error;
-      }
-      throw new WsException('Unexpected error when retrieving message.');
+      throw error; 
     }
   }
 
   async deleteMany(
     userId: string,
     deleteMessageDto: DeleteMessageDto,
-  ): Promise<void> {
+  ): Promise<{ count: number }> {
     try {
-      await this.messageRepository.deleteMany(userId, deleteMessageDto);
+      const result = await this.messageRepository.deleteMany(userId, deleteMessageDto);
+      
+      this.logger.log(
+        `User ${userId} deleted ${result.count} messages: ${deleteMessageDto.messageIds.join(', ')}`,
+      );
+      
+      return result;
     } catch (error) {
       this.logger.error(
-        `Failed to delete messages for user: ${userId}, message IDs: ${deleteMessageDto.messageIds.join(', ')}`,
+        `Failed to delete messages for user ${userId}: ${deleteMessageDto.messageIds.join(', ')}`,
         error.stack,
       );
-      if (error instanceof WsException) {
-        throw error;
-      }
-      throw new WsException('Unexpected error when deleting messages.');
+      throw error; 
     }
   }
 }
