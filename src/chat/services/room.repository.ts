@@ -12,9 +12,12 @@ import { Room } from '@prisma/client';
 
 @Injectable()
 export class RoomRepository {
-  private readonly logger = new Logger('RoomRepository');
+  constructor(private prisma: PrismaService) { }
 
-  constructor(private prisma: PrismaService) {}
+  private readonly baseWhereDeleted = {
+    isDeleted: false,
+    deletedAt: null,
+  };
 
   async create({ name, hostId, roomType, participantsId }: CreateRoomDto) {
     try {
@@ -32,16 +35,8 @@ export class RoomRepository {
       });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        this.logger.error(
-          `Database error when creating room: ${error.message}`,
-          error.stack,
-        );
         throw new WsException('Database error when creating room.');
       }
-      this.logger.error(
-        `Unexpected error when creating room: ${error.message}`,
-        error.stack,
-      );
       throw new WsException('Unexpected error when creating room.');
     }
   }
@@ -49,6 +44,51 @@ export class RoomRepository {
   async findOne(roomId: string) {
     try {
       return await this.prisma.room.findUniqueOrThrow({
+        where: {
+          id: roomId,
+          ...this.baseWhereDeleted
+        },
+        include: {
+          members: true
+        },
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new WsException('Room not found.');
+        }
+        throw new WsException('Database error when finding room.');
+      }
+      throw new WsException('Unexpected error when finding room.');
+    }
+  }
+
+  async update({ roomId, name }: UpdateRoomDto) {
+    try {
+      return await this.prisma.room.update({
+        where: { id: roomId, ...this.baseWhereDeleted },
+        data: {
+          name: name,
+          updatedAt: new Date(),
+        },
+        include: {
+          members: true
+        },
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new WsException('Room not found.');
+        }
+        throw new WsException('Database error when updating room.');
+      }
+      throw new WsException('Unexpected error when updating room.');
+    }
+  }
+
+  async hardDelete(roomId: string) {
+    try {
+      return await this.prisma.room.delete({
         where: {
           id: roomId,
         },
@@ -61,91 +101,106 @@ export class RoomRepository {
         if (error.code === 'P2025') {
           throw new WsException('Room not found.');
         }
-        this.logger.error(
-          `Database error when finding room ${roomId}: ${error.message}`,
-          error.stack,
-        );
-        throw new WsException('Database error when finding room.');
-      }
-      this.logger.error(
-        `Unexpected error when finding room ${roomId}: ${error.message}`,
-        error.stack,
-      );
-      throw new WsException('Unexpected error when finding room.');
-    }
-  }
-
-  async update({ roomId, name }: UpdateRoomDto) {
-    try {
-      return await this.prisma.room.update({
-        where: { id: roomId },
-        data: {
-          name: name,
-          updatedAt: new Date(),
-        },
-        include: {
-          members: true,
-        },
-      });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new WsException('Room not found.');
-        }
-        this.logger.error(
-          `Database error when updating room ${roomId}: ${error.message}`,
-          error.stack,
-        );
-        throw new WsException('Database error when updating room.');
-      }
-      this.logger.error(
-        `Unexpected error when updating room ${roomId}: ${error.message}`,
-        error.stack,
-      );
-      throw new WsException('Unexpected error when updating room.');
-    }
-  }
-
-  async delete(roomID: string) {
-    try {
-      return await this.prisma.room.delete({
-        where: {
-          id: roomID,
-        },
-        include: {
-          members: true,
-        },
-      });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new WsException('Room not found.');
-        }
-        this.logger.error(
-          `Database error when deleting room ${roomID}: ${error.message}`,
-          error.stack,
-        );
         throw new WsException('Database error when deleting room.');
       }
-      this.logger.error(
-        `Unexpected error when deleting room ${roomID}: ${error.message}`,
-        error.stack,
-      );
       throw new WsException('Unexpected error when deleting room.');
+    }
+  }
+
+  async softDelete(roomId: string) {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.message.updateMany({
+          where: {
+            roomId: roomId,
+            isDeleted: false, 
+          },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+          },
+        });
+
+        const deletedRoom = await tx.room.update({
+          where: {
+            id: roomId, 
+            ...this.baseWhereDeleted,
+          },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+          },
+          include: {
+            members: true,
+          }
+        });
+
+        return deletedRoom;
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new WsException('Room not found.');
+        }
+        throw new WsException('Database error when deleting room.');
+      }
+      throw new WsException('Unexpected error when deleting room.');
+    }
+  }
+
+
+  async restore(roomId: string) {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const restoredRoom = await tx.room.update({
+          where: {
+            id: roomId, 
+            isDeleted: true,
+          },
+          data: {
+            isDeleted: false,
+            deletedAt: null,
+          },
+          include: {
+            members: true,
+          }
+        });
+
+        await tx.message.updateMany({
+          where: {
+            roomId: roomId,
+            isDeleted: true,
+          },
+          data: {
+            isDeleted: false,
+            deletedAt: null,
+          },
+        });
+
+        return restoredRoom;
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new WsException('Room not found.');
+        }
+        throw new WsException('Database error when restoring room.');
+      }
+      throw new WsException('Unexpected error when restoring room.');
     }
   }
 
   async joinRoom(roomId: string, userId: string) {
     try {
       return await this.prisma.room.update({
-        where: { id: roomId },
+        where: { id: roomId, ...this.baseWhereDeleted },
         data: {
           members: {
             connect: { id: userId },
           },
         },
         include: {
-          members: true,
+          members:true
         },
       });
     } catch (error) {
@@ -153,16 +208,8 @@ export class RoomRepository {
         if (error.code === 'P2025') {
           throw new WsException('Room or user not found.');
         }
-        this.logger.error(
-          `Database error for user ${userId} joining room ${roomId}: ${error.message}`,
-          error.stack,
-        );
         throw new WsException('Database error when joining room.');
       }
-      this.logger.error(
-        `Unexpected error for user ${userId} joining room ${roomId}: ${error.message}`,
-        error.stack,
-      );
       throw new WsException('Unexpected error when joining room.');
     }
   }
@@ -170,7 +217,7 @@ export class RoomRepository {
   async leaveRoom(roomId: string, userId: string) {
     try {
       return await this.prisma.room.update({
-        where: { id: roomId },
+        where: { id: roomId, ...this.baseWhereDeleted },
         data: {
           members: {
             disconnect: { id: userId },
@@ -185,16 +232,8 @@ export class RoomRepository {
         if (error.code === 'P2025') {
           throw new WsException('Room or user not found.');
         }
-        this.logger.error(
-          `Database error for user ${userId} leaving room ${roomId}: ${error.message}`,
-          error.stack,
-        );
         throw new WsException('Database error when leaving room.');
       }
-      this.logger.error(
-        `Unexpected error for user ${userId} leaving room ${roomId}: ${error.message}`,
-        error.stack,
-      );
       throw new WsException('Unexpected error when leaving room.');
     }
   }
@@ -203,6 +242,7 @@ export class RoomRepository {
     try {
       return await this.prisma.room.findMany({
         where: {
+          ...this.baseWhereDeleted,
           members: {
             some: {
               id: userId,
@@ -210,17 +250,13 @@ export class RoomRepository {
           },
         },
         include: {
-          members: true,
+          members:true
         },
         orderBy: {
           updatedAt: 'desc',
         },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to find rooms for user ${userId}: ${error.message}`,
-        error.stack,
-      );
       if (error instanceof PrismaClientKnownRequestError) {
         throw new WsException(
           `Database error when fetching rooms: ${error.message}`,
@@ -233,14 +269,14 @@ export class RoomRepository {
   async assignUsers({ roomId, participantsId }: AssignUsersDto) {
     try {
       return await this.prisma.room.update({
-        where: { id: roomId },
+        where: { id: roomId, ...this.baseWhereDeleted },
         data: {
           members: {
             connect: participantsId.map((id) => ({ id: id })),
           },
         },
         include: {
-          members: true,
+          members: true
         },
       });
     } catch (error) {
@@ -248,16 +284,8 @@ export class RoomRepository {
         if (error.code === 'P2025') {
           throw new WsException('Room or users not found.');
         }
-        this.logger.error(
-          `Database error assigning users to room ${roomId}: ${error.message}`,
-          error.stack,
-        );
         throw new WsException('Database error when assigning users.');
       }
-      this.logger.error(
-        `Unexpected error assigning users to room ${roomId}: ${error.message}`,
-        error.stack,
-      );
       throw new WsException('Unexpected error when assigning users.');
     }
   }
@@ -265,14 +293,14 @@ export class RoomRepository {
   async deleteUsers({ roomId, participantsId }: DeleteUsersDto) {
     try {
       return await this.prisma.room.update({
-        where: { id: roomId },
+        where: { id: roomId, ...this.baseWhereDeleted },
         data: {
           members: {
             disconnect: participantsId.map((id) => ({ id: id })),
           },
         },
         include: {
-          members: true,
+          members: true
         },
       });
     } catch (error) {
@@ -280,16 +308,8 @@ export class RoomRepository {
         if (error.code === 'P2025') {
           throw new WsException('Room or user not found.');
         }
-        this.logger.error(
-          `Database error when removing users from room ${roomId}: ${error.message}`,
-          error.stack,
-        );
         throw new WsException('Database error when removing user from room.');
       }
-      this.logger.error(
-        `Unexpected error when removing users from room ${roomId}: ${error.message}`,
-        error.stack,
-      );
       throw new WsException('Unexpected error when removing user from room.');
     }
   }
