@@ -1,76 +1,63 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConnectedUserRepository } from './connected-user.repository';
-import { ConnectedUser, User } from '@prisma/client';
+import { ConnectedUser } from '@prisma/client';
 import { WsException } from '@nestjs/websockets';
 import { UserPayload } from 'src/types/user-payload.type';
 
 @Injectable()
 export class ConnectedUserService {
-  private readonly logger = new Logger('ConnectedUserService');
+  private readonly logger = new Logger(ConnectedUserService.name);
+
   constructor(private connectedUserRepository: ConnectedUserRepository) {}
 
   async createConnectedUser(
     userPayload: UserPayload,
     socketId: string,
   ): Promise<ConnectedUser> {
-    if (!userPayload.id) {
-      throw new WsException('User id is required');
-    }
-
     try {
-      const newuser = await this.connectedUserRepository.create(
-        userPayload,
-        socketId,
-      );
-      return newuser;
+      return await this.connectedUserRepository.create(userPayload, socketId);
     } catch (error) {
-      this.logger.error('Create failed', error.stack);
-      if (error instanceof WsException) {
-        throw error;
-      }
-      throw new WsException('Unexpected error while creating a connected user');
+      this.logger.error(
+        `Failed to create connected user for ${userPayload.id}`,
+        error.stack,
+      );
+      throw error; 
     }
   }
 
-  async deleteConnectedUser(socketId: string) {
+  async deleteConnectedUser(socketId: string): Promise<ConnectedUser> {
     try {
       return await this.connectedUserRepository.delete(socketId);
     } catch (error) {
-      this.logger.error('Delete failed', error.stack);
-      throw new WsException('Unexpected error when deleting a connected user');
+      this.logger.error(`Failed to delete connected user ${socketId}`, error.stack);
+      throw error; 
     }
   }
 
-  async deleteAllUsers() {
+  async deleteAllUsers(): Promise<{ count: number }> {
     try {
-      return await this.connectedUserRepository.deleteAll();
+      const result = await this.connectedUserRepository.deleteAll();
+      this.logger.log(`Deleted ${result.count} connected users`);
+      return result;
     } catch (error) {
-      this.logger.error('Delete all failed', error.stack);
-      throw new WsException(
-        'Unexpected error when deleting all connected users',
-      );
+      this.logger.error('Failed to delete all connected users', error.stack);
+      throw new WsException('Failed to delete all connected users');
     }
   }
 
-  async findConnectedUsersByUserIds(
-    userIds: string[],
-  ): Promise<ConnectedUser[]> {
-    if (!userIds || userIds.length === 0) {
+  async findConnectedUsersByUserIds(userIds: string[]): Promise<ConnectedUser[]> {
+    if (!userIds?.length) {
       return [];
     }
+
     try {
       return await this.connectedUserRepository.findByUserIds(userIds);
     } catch (error) {
       this.logger.error(
-        `Error finding connected users by IDs ${userIds.join(', ')}: ${error.message}`,
+        `Failed to find connected users for IDs: ${userIds.join(', ')}`,
         error.stack,
       );
-      if (error instanceof WsException) {
-        throw error;
-      }
-      throw new WsException(
-        'Failed to retrieve connected users for notification.',
-      );
+      throw new WsException('Failed to retrieve connected users');
     }
   }
 }

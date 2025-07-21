@@ -28,6 +28,7 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
+import { ConfigService } from '@nestjs/config';
 
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway(3002, { cors: { origin: '*' } })
@@ -35,12 +36,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger('ChatGateway');
 
+  private readonly jwtSecret;
+  private readonly jwtRefreshSecret;
+  private readonly jwtExpire;
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly roomService: RoomService,
     private readonly connectedUserService: ConnectedUserService,
     private readonly messageService: MessageService,
-  ) { }
+    private readonly configService: ConfigService,
+  ) { 
+    this.jwtSecret = this.configService.get<string>('JWT_SECRET');
+    this.jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    this.jwtExpire = this.configService.get<string>('JWT_EXPIRE')
+
+    if (!this.jwtSecret || !this.jwtRefreshSecret) {
+    throw new Error('JWT secrets are not configured properly');
+  }
+  }
 
   async onModuleInit(): Promise<void> {
     this.logger.log('ChatGateway initialized');
@@ -97,7 +111,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         createdRoomWithDetails,
       );
       this.logger.log(
-        `Room with UUID ${newRoom.id} created and participants notified successfully.`,
+        `Room with ID ${newRoom.id} created and participants notified successfully.`,
       );
     } catch (error) {
       this.logger.error(`Failed to create room: ${error.message}`, error.stack);
@@ -490,7 +504,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
       const userPayload = this.jwtService.verify<UserPayload>(token, {
-        secret: process.env.JWT_SECRET,
+        secret: this.jwtSecret,
       });
       return userPayload;
     } catch (error) {
@@ -560,7 +574,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
-    if (roomType === RoomTypeEnum.GROUP && participants.length>=0) {
+    if (roomType === RoomTypeEnum.GROUP) {
       if(participants.length<1 && (operation === 'assign' || operation === 'delete')){
         throw new WsException(`Cannot ${operation} ${participants.length} users`)
       }
@@ -618,7 +632,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const refreshPayload = this.jwtService.verify<UserPayload>(
         refreshTokenDto.refreshToken,
         {
-          secret: process.env.JWT_REFRESH_SECRET,
+          secret: this.jwtRefreshSecret,
         },
       );
 
@@ -627,8 +641,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const newAccessToken = this.jwtService.sign(
-        { uuid: currentUser.id, email: currentUser.email },
-        { secret: process.env.JWT_SECRET, expiresIn: '1h' },
+        { id: currentUser.id, email: currentUser.email },
+        { secret: this.jwtSecret, expiresIn: this.jwtExpire },
       );
 
       socket.emit('tokenRefreshed', { accessToken: newAccessToken });
