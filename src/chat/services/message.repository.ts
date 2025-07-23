@@ -1,149 +1,181 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateMessageDto,
   DeleteMessageDto,
-  MessageDto,
   UpdateMessageDto,
 } from '../dto/message.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { WsException } from '@nestjs/websockets';
 import { Message } from '@prisma/client';
-import { create } from 'domain';
 
 @Injectable()
 export class MessageRepository {
-  private readonly logger = new Logger('MessageRepository');
+  constructor(private prisma: PrismaService) { }
 
-  constructor(private prisma: PrismaService) {}
+  private readonly baseWhereDeleted = {
+    isDeleted: false,
+    deletedAt: null,
+  };
 
-  async createMessage(createMessageDto: CreateMessageDto) {
+  async createMessage({ roomId, content, senderId }: CreateMessageDto): Promise<Message> {
+    try {
+      await this.prisma.room.findFirstOrThrow({
+        where: {
+          id: roomId,
+          ...this.baseWhereDeleted,
+        }
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new WsException('Room not found or has been deleted');
+      }
+      throw error;
+    }
+
     try {
       return await this.prisma.message.create({
         data: {
-          ...createMessageDto,
+          roomId: roomId,
+          content: content,
+          senderId: senderId,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to create message: ${JSON.stringify(createMessageDto)}`,
-        error.stack,
-      );
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new WsException('Database error when creating message.');
+        throw new WsException(`Database error: ${error.message}`);
       }
-      throw new WsException('Unexpected error when creating message.');
+      throw new WsException('Failed to create message');
     }
   }
 
   async findByRoomId(roomId: string): Promise<Message[]> {
     try {
-      return await this.prisma.message.findMany({
-        where: { roomId },
-        include: { sender: true },
+      await this.prisma.room.findFirstOrThrow({
+        where: {
+          id: roomId,
+          ...this.baseWhereDeleted,
+        }
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to find messages for the room with ID: ${roomId}`,
-        error.stack,
-      );
-      if (error instanceof PrismaClientKnownRequestError) {
-        throw new WsException('Database error when retrieving messages.');
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new WsException('Room not found or has been deleted');
       }
-      throw new WsException('Unexpected error when retrieving messages.');
+      throw error;
     }
+
+    return await this.prisma.message.findMany({
+      where: {
+        roomId,
+        ...this.baseWhereDeleted
+      },
+      include: {
+        sender: true,
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
   }
 
-  async getMessage(uuid: string) {
+  async getMessage(uuid: string): Promise<Message> {
     try {
       return await this.prisma.message.findUniqueOrThrow({
-        where: { id: uuid },
+        where: {
+          id: uuid,
+          ...this.baseWhereDeleted
+        },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to get message with UUID: ${uuid}`,
-        error.stack,
-      );
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new WsException('Message not found.');
-        }
-        throw new WsException('Database error when retrieving message.');
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException('Message not found');
       }
-      throw new WsException('Unexpected error when retrieving message.');
+      throw new WsException('Failed to retrieve message');
     }
   }
 
-  async updateMessage({ messageId, content }: UpdateMessageDto) {
+  async updateMessage({ messageId, content }: UpdateMessageDto): Promise<Message> {
     try {
       return await this.prisma.message.update({
-        where: { id: messageId },
+        where: {
+          id: messageId,
+          ...this.baseWhereDeleted
+        },
         data: {
           content: content,
           updatedAt: new Date(),
         },
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to update message with ID: ${messageId}`,
-        error.stack,
-      );
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new WsException('Message not found.');
-        }
-        throw new WsException('Database error when updating message.');
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException('Message not found or has been deleted');
       }
-      throw new WsException('Unexpected error when updating message.');
+      throw new WsException('Failed to update message');
     }
   }
 
-  async deleteMany(userId: string, deleteMessageDto: DeleteMessageDto) {
+  async deleteMany(userId: string, { roomId, messageIds }: DeleteMessageDto): Promise<{ count: number }> {
+    const isRoomExisting = await this.prisma.room.findFirstOrThrow({
+      where: {
+        id: roomId,
+        ...this.baseWhereDeleted,
+      }
+    });
+
+    const messages = await this.prisma.message.findMany({
+      where: {
+        id: { in: messageIds },
+        ...this.baseWhereDeleted,
+      },
+    });
+
+    const notOwnedMessages = messages.filter((msg) => msg.senderId !== userId);
+    if (notOwnedMessages.length > 0) {
+      throw new WsException('You can only delete your own messages');
+    }
+
+    const notFoundIds = messageIds.filter(
+      (id) => !messages.find((msg) => msg.id === id),
+    );
+    if (notFoundIds.length > 0) {
+      throw new WsException(`Messages not found or already deleted: ${notFoundIds.join(', ')}`);
+    }
+
     try {
-      const messages = await this.prisma.message.findMany({
+      return await this.prisma.message.deleteMany({
         where: {
-          id: { in: deleteMessageDto.messageIds },
-        },
-      });
-
-      const notOwnedMessages = messages.filter((msg) => msg.senderId != userId);
-      if (notOwnedMessages.length > 0) {
-        throw new WsException('You can delete only your own messages.');
-      }
-
-      const notFoundIds = deleteMessageDto.messageIds.filter(
-        (id) => !messages.find((msg) => msg.id === id),
-      );
-      if (notFoundIds.length > 0) {
-        throw new WsException(
-          `Messages not found IDs: ${notFoundIds.join(', ')}`,
-        );
-      }
-
-      const result = await this.prisma.message.deleteMany({
-        where: {
-          id: { in: deleteMessageDto.messageIds },
+          id: { in: messageIds },
           senderId: userId,
+          ...this.baseWhereDeleted,
         },
       });
-      this.logger.log(
-        `Deleted messages with IDs: ${deleteMessageDto.messageIds.join(', ')}`,
-      );
-      return result;
     } catch (error) {
-      this.logger.error(
-        `Failed to delete messages for user id: ${userId}`,
-        error.stack,
-      );
-      if (error instanceof WsException) {
-        throw error;
-      }
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new WsException('Database error when deleting messages.');
+        throw new WsException(`Database error: ${error.message}`);
       }
-      throw new WsException('Unexpected error when deleting messages.');
+      throw new WsException('Failed to delete messages');
+    }
+  }
+
+  async restoreMessagesByRoomId(roomId: string): Promise<{ count: number }> {
+    try {
+      return await this.prisma.message.updateMany({
+        where: {
+          roomId: roomId,
+          isDeleted: true,
+        },
+        data: {
+          isDeleted: false,
+          deletedAt: null,
+        },
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new WsException(`Database error when restoring messages: ${error.message}`);
+      }
+      throw new WsException('Failed to restore messages');
     }
   }
 }

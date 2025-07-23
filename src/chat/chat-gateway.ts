@@ -11,7 +11,7 @@ import { WsCurrentUser } from './common/decorators/ws-currentuser.decorator';
 import { RoomTypeEnum } from './common/enums/room-type.enum';
 import { MessageService } from './services/message.service';
 import { WsValidationPipe } from './common/pipes/ws-validation.pipe';
-import { CreateRoomDto, DeleteRoomDto, UpdateRoomDto } from './dto/room.dto';
+import { AssignUsersDto, CreateRoomDto, DeleteRoomDto, LeaveRoomDto, RoomFetchRequestDto, RoomJoinDto, UpdateRoomDto } from './dto/room.dto';
 import {
   CreateMessageDto,
   DeleteMessageDto,
@@ -28,6 +28,7 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
+import { ConfigService } from '@nestjs/config';
 
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway(3002, { cors: { origin: '*' } })
@@ -35,12 +36,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger('ChatGateway');
 
+  private readonly jwtSecret;
+  private readonly jwtRefreshSecret;
+  private readonly jwtExpire;
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly roomService: RoomService,
     private readonly connectedUserService: ConnectedUserService,
     private readonly messageService: MessageService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) { 
+    this.jwtSecret = this.configService.get<string>('JWT_SECRET');
+    this.jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    this.jwtExpire = this.configService.get<string>('JWT_EXPIRE')
+
+    if (!this.jwtSecret || !this.jwtRefreshSecret) {
+    throw new Error('JWT secrets are not configured properly');
+  }
+  }
 
   async onModuleInit(): Promise<void> {
     this.logger.log('ChatGateway initialized');
@@ -76,6 +90,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<void> {
     try {
       this.validateRoomTypeAndParticipants(
+        'create',
         createRoomDto.roomType,
         createRoomDto.participantsId,
         currentUser.id,
@@ -96,7 +111,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         createdRoomWithDetails,
       );
       this.logger.log(
-        `Room with UUID ${newRoom.id} created and participants notified successfully.`,
+        `Room with ID ${newRoom.id} created and participants notified successfully.`,
       );
     } catch (error) {
       this.logger.error(`Failed to create room: ${error.message}`, error.stack);
@@ -108,7 +123,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async onFetchRoomDetails(
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe())
-    roomFetchRequestDto: { roomId: string },
+    roomFetchRequestDto: RoomFetchRequestDto,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const { id: userId } = currentUser;
@@ -116,12 +131,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      const isMember = room.members.some((member) => member.id === userId);
-      if (!isMember) {
-        throw new WsException(
-          'Access Denied: You are not a member of this room.',
-        );
-      }
+      this.verifyUserAuthorization(room.members, userId)
 
       client.emit('roomDetailsFetched', room);
       this.logger.log(
@@ -152,6 +162,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new WsException('Private rooms cannot be updated.');
       }
 
+      this.verifyUserAuthorization(room.members, currentUser.id)
+
       const updatedRoom = await this.roomService.updateRoom(
         updateRoomDto,
         currentUser.id,
@@ -177,7 +189,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('joinRoom')
   async onJoinRoom(
     @WsCurrentUser() currentUser: UserPayload,
-    @MessageBody(new WsValidationPipe()) roomJoinDto: { roomId: string },
+    @MessageBody(new WsValidationPipe()) roomJoinDto: RoomJoinDto,
   ): Promise<void> {
     const { id: userId } = currentUser;
     const { roomId } = roomJoinDto;
@@ -207,7 +219,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async onAssignUsers(
     @WsCurrentUser() currentUser: UserPayload,
     @MessageBody(new WsValidationPipe())
-    assignUsersDto: { roomId: string; participantsId: string[] },
+    assignUsersDto: AssignUsersDto,
   ): Promise<void> {
     const { id: userId } = currentUser;
     const { roomId, participantsId } = assignUsersDto;
@@ -215,15 +227,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const room = await this.roomService.findRoomById(roomId);
       if (room.hostId !== userId) {
-        throw new WsException('Only the host can assign users to the room.');
+        throw new WsException('Only host can assign users to the room.');
       }
 
       this.validateRoomTypeAndParticipants(
+        'assign',
         room.roomType,
         participantsId,
         userId,
       );
-      this.verifyUserAuthorization(room.members, userId);
+
+      this.verifyUserAuthorization(room.members, userId)
 
       const updatedRoom = await this.roomService.assignUsers(
         assignUsersDto,
@@ -252,14 +266,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('leaveRoom')
   async onLeaveRoom(
     @WsCurrentUser() currentUser: UserPayload,
-    @MessageBody(new WsValidationPipe()) roomLeaveDto: { roomId: string },
+    @MessageBody(new WsValidationPipe()) leaveRoomDto: LeaveRoomDto,
   ): Promise<void> {
     const { id: userId } = currentUser;
-    const { roomId } = roomLeaveDto;
+    const { roomId } = leaveRoomDto;
 
     try {
       const room = await this.roomService.leaveRoom(roomId, userId);
-      this.verifyUserAuthorization(room.members, userId);
 
       await this.notifyRoomParticipants(room.members, 'userLeft', {
         userId,
@@ -294,6 +307,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       this.verifyUserAuthorization(room.members, userId);
       this.validateRoomTypeAndParticipants(
+        'delete',
         room.roomType,
         participantsId,
         userId,
@@ -365,12 +379,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      const isMember = room.members.some((member) => member.id === userId);
-      if (!isMember) {
-        throw new WsException(
-          'Access Denied: You are not a member of this room.',
-        );
-      }
+      this.verifyUserAuthorization(room.members, userId)
 
       const newMessage = await this.messageService.createMessage({
         ...createMessageDto,
@@ -405,12 +414,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      const isMember = room.members.some((member) => member.id === userId);
-      if (!isMember) {
-        throw new WsException(
-          'Access Denied: You are not a member of this room.',
-        );
-      }
+      this.verifyUserAuthorization(room.members, userId)
 
       const messages = await this.messageService.findByRoomId(
         filterMessageDto.roomId,
@@ -471,12 +475,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      const isMember = room.members.some((member) => member.id === userId);
-      if (!isMember) {
-        throw new WsException(
-          'Access Denied: You are not a member of this room.',
-        );
-      }
+      this.verifyUserAuthorization(room.members, userId)
 
       await this.messageService.deleteMany(userId, deleteMessageDto);
 
@@ -505,7 +504,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         );
       }
       const userPayload = this.jwtService.verify<UserPayload>(token, {
-        secret: process.env.JWT_SECRET,
+        secret: this.jwtSecret,
       });
       return userPayload;
     } catch (error) {
@@ -543,17 +542,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     socket.disconnect();
   }
 
-  private extractJwtToken(socket: Socket): string {
-    const token = socket.handshake.auth.token as string;
-
-    if (!token) {
-      throw new UnauthorizedException(
-        'No authentication token provided via handshake.auth.',
-      );
-    }
-    return token;
-  }
-
   private verifyUserAuthorization(members: User[], userId: string): void {
     const isMember = members.some((member) => member.id === userId);
     if (!isMember) {
@@ -564,31 +552,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private validateRoomTypeAndParticipants(
+    operation: 'create' | 'assign' | 'delete',
     roomType: string,
     participants: string[],
     userId: string,
   ): void {
     if (participants.includes(userId)) {
-      throw new WsException(
-        'The room host should not be included in the participants list.',
-      );
+      throw new WsException('Host should not be included in participants list.');
     }
 
-    if (roomType === RoomTypeEnum.PRIVATE && participants.length !== 1) {
-      throw new WsException(
-        'Private chat must include exactly one participant aside from the host.',
-      );
+    if (new Set(participants).size !== participants.length) {
+      throw new WsException('Participants list contains duplicates.');
     }
 
-    if (roomType === RoomTypeEnum.GROUP && participants.length < 1) {
-      throw new WsException(
-        'Group chat must include at least one participant aside from the host.',
-      );
+    if (roomType === RoomTypeEnum.PRIVATE) {
+      if (operation === 'create' && participants.length !== 1) {
+        throw new WsException('Private chat must have exactly one participant.');
+      }
+      if (operation === 'assign' || operation === 'delete') {
+        throw new WsException(`Cannot ${operation} users in private chat.`);
+      }
     }
 
-    const uniqueParticipantIds = new Set(participants);
-    if (uniqueParticipantIds.size !== participants.length) {
-      throw new WsException('The participants list contains duplicates.');
+    if (roomType === RoomTypeEnum.GROUP) {
+      if(participants.length<1 && (operation === 'assign' || operation === 'delete')){
+        throw new WsException(`Cannot ${operation} ${participants.length} users`)
+      }
     }
   }
 
@@ -611,18 +600,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       notificationPromises.map((np) => np.promise),
     );
 
-    results.forEach((result, index) => {
-      const { socketId } = notificationPromises[index];
-      if (result.status === 'fulfilled') {
-        this.logger.log(
-          `Notification sent successfully to Socket ID ${socketId} for event '${event}'`,
-        );
-      } else {
-        this.logger.error(
-          `Failed to notify Socket ID ${socketId} for event '${event}': ${result.reason}`,
-        );
-      }
-    });
+    const failures = results.filter(r => r.status === 'rejected').length;
+    if (failures > 0) {
+      this.logger.warn(`Failed to notify ${failures}/${connectedUsers.length} users for event '${event}'`);
+    }
   }
 
   private async emitToSocket(
@@ -651,7 +632,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const refreshPayload = this.jwtService.verify<UserPayload>(
         refreshTokenDto.refreshToken,
         {
-          secret: process.env.JWT_REFRESH_SECRET,
+          secret: this.jwtRefreshSecret,
         },
       );
 
@@ -660,8 +641,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const newAccessToken = this.jwtService.sign(
-        { uuid: currentUser.id, email: currentUser.email },
-        { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '1h' },
+        { id: currentUser.id, email: currentUser.email },
+        { secret: this.jwtSecret, expiresIn: this.jwtExpire },
       );
 
       socket.emit('tokenRefreshed', { accessToken: newAccessToken });

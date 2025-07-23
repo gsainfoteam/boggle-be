@@ -43,7 +43,7 @@ export class RoomService {
         );
         throw new WsException('Only the host is allowed to delete the room.');
       }
-      return await this.roomRepository.delete(uuid);
+      return await this.roomRepository.softDelete(uuid);
     } catch (error) {
       if (error instanceof WsException) {
         throw error;

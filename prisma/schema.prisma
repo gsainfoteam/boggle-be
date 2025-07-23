@@ -114,6 +114,8 @@ model Message {
   senderId  String
   room      Room @relation("RoomMessages", fields: [roomId], references: [id])
   roomId    String
+  isDeleted Boolean  @default(false)
+  deletedAt DateTime?
 }
 
 model Room {
@@ -122,6 +124,8 @@ model Room {
   hostId    String
   name      String
   roomType  RoomType
+  isDeleted Boolean  @default(false)
+  deletedAt DateTime?
   members   User[] @relation("RoomMembers")
   messages  Message[] @relation("RoomMessages")
   createdAt DateTime @default(now())
