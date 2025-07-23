@@ -35,9 +35,8 @@ export class AuthService {
     await this.authRepository.saveToken(payload.id, refreshToken);
 
     return {
-      id: user.id,
-      access_token: accessToken,
-      refresh_token: refreshToken,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
     };
   }
 
@@ -63,9 +62,8 @@ export class AuthService {
       });
 
       return {
-        id: payload.id,
-        access_token: accessToken,
-        refresh_token: refreshToken,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
       };
     } catch (err) {
       this.logger.debug(err);
