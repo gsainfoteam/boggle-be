@@ -23,11 +23,10 @@ export class AuthRepository {
           return await this.prisma.user
             .create({
               data: {
+                sub: 'aaaa',
                 name: body.email,
                 email: body.email,
-                password: await bcrypt.hash(body.password, 10),
-                studentId: 20250000,
-                major: '전자전기컴퓨터공학부',
+                studentId: '20250000',
               },
             })
             .catch((error) => {
@@ -41,22 +40,7 @@ export class AuthRepository {
       });
   }
 
-  async saveToken(id: string, token: string) {
-    await this.prisma.user
-      .update({
-        where: { id: id },
-        data: { refreshToken: token },
-      })
-      .catch((error) => {
-        if (error instanceof PrismaClientKnownRequestError) {
-          if (error.code === 'P2025') {
-            throw new NotFoundException('User id is not found');
-          }
-          throw new InternalServerErrorException('Database Error');
-        }
-        throw new InternalServerErrorException('Internal Server Error');
-      });
-  }
+  async saveToken(id: string, token: string) {}
 
   async findUser(payload: PayloadDto) {
     return await this.prisma.user
@@ -67,20 +51,5 @@ export class AuthRepository {
       });
   }
 
-  async deleteToken(payload: PayloadDto): Promise<void> {
-    await this.prisma.user
-      .update({
-        where: { id: payload.id },
-        data: { refreshToken: null },
-      })
-      .catch((error) => {
-        if (error instanceof PrismaClientKnownRequestError) {
-          if (error.code === 'P2025') {
-            throw new NotFoundException('User id is not found');
-          }
-          throw new InternalServerErrorException('Database Error');
-        }
-        throw new InternalServerErrorException('Internal Server Error');
-      });
-  }
+  async deleteToken(payload: PayloadDto): Promise<void> {}
 }

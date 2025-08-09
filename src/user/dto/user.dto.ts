@@ -17,16 +17,8 @@ export class UserDto {
   readonly email: string;
 
   @IsString()
-  @ApiProperty({ example: 'abcde' })
-  readonly password: string;
-
-  @IsString()
   @ApiProperty({ example: '20250000' })
   readonly studentId: string;
-
-  @IsString()
-  @ApiProperty({ example: '전자전기컴퓨터공학부' })
-  readonly major: string;
 
   @IsArray()
   @ApiProperty({ type: [PostDto] })

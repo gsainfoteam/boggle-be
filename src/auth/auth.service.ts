@@ -19,9 +19,6 @@ export class AuthService {
   async login(body: LoginDto): Promise<TokenDto> {
     const user = await this.authRepository.findOrCreateUser(body);
 
-    if (!(await bcrypt.compare(body.password, user.password)))
-      throw new UnauthorizedException('Password is failed');
-
     const payload: PayloadDto = { id: user.id };
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
@@ -53,8 +50,6 @@ export class AuthService {
       delete payload.exp;
 
       const user = await this.authRepository.findUser(payload);
-      if (refreshToken !== user.refreshToken)
-        throw new UnauthorizedException('Unauthorized Token');
 
       const accessToken = this.jwtService.sign(payload, {
         secret: this.configService.get<string>('JWT_SECRET'),
