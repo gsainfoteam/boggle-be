@@ -40,8 +40,9 @@ export class UserService {
   }
 
   async login(code: string): Promise<TokenDto> {
-    // Get Code
-    // https://idp.gistory.me/authorize?client_id=7f16b001-6333-4106-8e60-7f397dad86b1&redirect_uri=http://localhost:3000/redirect&response_type=code&scope=profile student_id email phone_number&code_challenge=code_challenge&code_challenge_method=plain
+    /* idp test
+    https://idp.gistory.me/authorize?client_id=5aec0c22-288b-478f-8bbc-92cfd89fc91d&redirect_uri=http://localhost:3000/redirect&response_type=code&scope=profile%20student_id%20email&code_challenge=code_challenge&code_challenge_method=plain
+    */
 
     const response = (
       await firstValueFrom(

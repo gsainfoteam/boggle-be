@@ -20,13 +20,12 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
-import { UpdateUserDto } from './dto/updateUser.dto';
 import { PayloadDto } from 'src/auth/dto/payload.dto';
 import { UserIdDto } from './dto/userId.dto';
 import { LoginDto } from './dto/login.dto';
 import { TokenDto } from './dto/token.dto';
 import { UserDto } from './dto/user.dto';
+import { IdPGuard } from './guard/idp.guard';
 
 @Controller('user')
 export class UserController {
@@ -45,11 +44,9 @@ export class UserController {
   @ApiNotFoundResponse({ description: 'User Not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  async findSelf(
-    @Request() req: Request & { user: PayloadDto },
-  ): Promise<UserDto> {
-    return this.userService.findUser(req.user.id);
+  @UseGuards(IdPGuard)
+  async findSelf(@Request() req: Request & { user: string }): Promise<UserDto> {
+    return this.userService.findUser(req.user);
   }
 
   @Get(':id')
@@ -75,8 +72,8 @@ export class UserController {
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  deleteUser(@Request() req: Request & { user: PayloadDto }): Promise<UserDto> {
-    return this.userService.deleteUser(req.user.id);
+  @UseGuards(IdPGuard)
+  deleteUser(@Request() req: Request & { user: string }): Promise<UserDto> {
+    return this.userService.deleteUser(req.user);
   }
 }
