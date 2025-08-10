@@ -7,13 +7,19 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListQueryDto } from './dto/postList.dto';
-import { PostType } from '@prisma/client';
+import { Post, PostType, RoommateDetails, User } from '@prisma/client';
 
 @Injectable()
 export class PostRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getPostList({ skip, take, type }: PostListQueryDto) {
+  async getPostList({ skip, take, type }: PostListQueryDto): Promise<
+    (Post & {
+      author: User;
+      participants: User[];
+      roommateDetails: RoommateDetails | null;
+    })[]
+  > {
     return await this.prisma.post.findMany({
       skip: skip,
       take: take,
@@ -22,40 +28,26 @@ export class PostRepository {
         type: type === 'ALL' ? undefined : type,
       },
       include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        participants: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        author: true,
+        participants: true,
         roommateDetails: true,
       },
     });
   }
 
-  async getPost(id: string) {
+  async getPost(id: string): Promise<
+    Post & {
+      author: User;
+      participants: User[];
+      roommateDetails: RoommateDetails | null;
+    }
+  > {
     return await this.prisma.post
       .findUniqueOrThrow({
         where: { id: id },
         include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          participants: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
+          author: true,
+          participants: true,
           roommateDetails: true,
         },
       })
@@ -70,7 +62,7 @@ export class PostRepository {
       });
   }
 
-  async createPost(post: CreatePostDto, authorId: string) {
+  async createPost(post: CreatePostDto, authorId: string): Promise<Post> {
     return await this.prisma.post
       .create({
         data: {
@@ -117,7 +109,7 @@ export class PostRepository {
       });
   }
 
-  async updatePost(id: string, post: CreatePostDto) {
+  async updatePost(id: string, post: CreatePostDto): Promise<Post> {
     return await this.prisma.post
       .update({
         where: { id: id },
@@ -165,7 +157,7 @@ export class PostRepository {
       });
   }
 
-  async joinPost(id: string, user: string) {
+  async joinPost(id: string, user: string): Promise<Post> {
     return await this.prisma.post
       .update({
         where: {
@@ -188,7 +180,7 @@ export class PostRepository {
       });
   }
 
-  async deleteUser(id: string, user: string) {
+  async deleteUser(id: string, user: string): Promise<Post> {
     return await this.prisma.post
       .update({
         where: {
@@ -212,7 +204,7 @@ export class PostRepository {
       });
   }
 
-  async deletePost(id: string) {
+  async deletePost(id: string): Promise<Post> {
     return await this.prisma.post
       .delete({
         where: { id: id },

@@ -4,6 +4,7 @@ import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListQueryDto } from './dto/postList.dto';
 import { UserIdDto } from 'src/user/dto/userId.dto';
+import { Post } from '@prisma/client';
 
 @Injectable()
 export class PostService {
@@ -21,7 +22,9 @@ export class PostService {
           id: post.authorId,
           name: post.author.name,
         },
-        participants: post.participants,
+        participants: post.participants.map((participant) => {
+          return { id: participant.id, name: participant.name };
+        }),
         maxParticipants: post.maxParticipants,
         createdAt: post.createdAt,
         deadline: post.deadline,
@@ -44,7 +47,9 @@ export class PostService {
         id: post.authorId,
         name: post.author.name,
       },
-      participants: post.participants,
+      participants: post.participants.map((participant) => {
+        return { id: participant.id, name: participant.name };
+      }),
       maxParticipants: post.maxParticipants,
       createdAt: post.createdAt,
       deadline: post.deadline,
@@ -87,7 +92,7 @@ export class PostService {
     return await this.getPost(postId);
   }
 
-  async deletePost(id: string, user: string) {
+  async deletePost(id: string, user: string): Promise<Post> {
     const authorId = (await this.postRepository.getPost(id)).authorId;
     if (authorId !== user) throw new ForbiddenException('Not match user id');
 
