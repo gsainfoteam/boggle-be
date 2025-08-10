@@ -1,6 +1,5 @@
 import { Logger, UnauthorizedException, UseFilters } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
 import { Server } from 'socket.io';
 import { UserPayload } from 'src/types/user-payload.type';
 import { ConnectedUserService } from './services/connected-user.service';
@@ -37,6 +36,8 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { ConfigService } from '@nestjs/config';
+import { UserService } from 'src/user/user.service';
+import { UserRepository } from 'src/user/user.repository';
 
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway(3002, { cors: { origin: '*' } })
@@ -44,24 +45,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger('ChatGateway');
 
-  private readonly jwtSecret;
-  private readonly jwtRefreshSecret;
   private readonly jwtExpire;
 
   constructor(
-    private readonly jwtService: JwtService,
     private readonly roomService: RoomService,
     private readonly connectedUserService: ConnectedUserService,
     private readonly messageService: MessageService,
     private readonly configService: ConfigService,
+    private readonly userService: UserService,
+    private readonly userRepository: UserRepository,
   ) {
-    this.jwtSecret = this.configService.get<string>('JWT_SECRET');
-    this.jwtRefreshSecret = this.configService.get<string>('JWT_SECRET');
     this.jwtExpire = this.configService.get<string>('JWT_EXPIRE');
-
-    if (!this.jwtSecret || !this.jwtRefreshSecret) {
-      throw new Error('JWT secrets are not configured properly');
-    }
   }
 
   async onModuleInit(): Promise<void> {
@@ -511,9 +505,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           'No authentication token provided via handshake.auth.',
         );
       }
-      const userPayload = this.jwtService.verify<UserPayload>(token, {
-        secret: this.jwtSecret,
-      });
+      const userInfo = await this.userService.idpUserInfo(token);
+      const userPayload = await this.userRepository.findOrCreateUser(userInfo);
+
       return userPayload;
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
@@ -639,41 +633,5 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       });
     });
-  }
-
-  @SubscribeMessage('refreshToken')
-  async onRefreshToken(
-    @WsCurrentUser() currentUser: UserPayload,
-    @MessageBody() refreshTokenDto: { refreshToken: string },
-    @ConnectedSocket() socket: Socket,
-  ): Promise<void> {
-    try {
-      const refreshPayload = this.jwtService.verify<UserPayload>(
-        refreshTokenDto.refreshToken,
-        {
-          secret: this.jwtRefreshSecret,
-        },
-      );
-
-      if (refreshPayload.id !== currentUser.id) {
-        throw new WsException('Invalid refresh token.');
-      }
-
-      const newAccessToken = this.jwtService.sign(
-        { id: currentUser.id, email: currentUser.email },
-        { secret: this.jwtSecret, expiresIn: this.jwtExpire },
-      );
-
-      socket.emit('tokenRefreshed', { accessToken: newAccessToken });
-      this.logger.log(
-        `Token refreshed successfully for User ID ${currentUser.id}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Token refresh failed for User ID ${currentUser.id}: ${error.message}`,
-        error.stack,
-      );
-      throw new WsException('Error occurred while refreshing token.');
-    }
   }
 }

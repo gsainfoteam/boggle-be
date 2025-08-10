@@ -9,5 +9,6 @@ import { IdPStrategy } from './guard/idp.strategy';
   imports: [PrismaModule, HttpModule],
   controllers: [UserController],
   providers: [UserService, UserRepository, IdPStrategy],
+  exports: [UserService, UserRepository],
 })
 export class UserModule {}
