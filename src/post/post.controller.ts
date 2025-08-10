@@ -14,7 +14,6 @@ import {
 import { PostService } from './post.service';
 import { PostIdDto } from './dto/postId.dto';
 import { PostDto } from './dto/post.dto';
-import { JwtAuthGuard } from 'src/auth/strategy/jwtAuth.guard';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -28,11 +27,11 @@ import {
 } from '@nestjs/swagger';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListDto, PostListQueryDto } from './dto/postList.dto';
-import { PayloadDto } from 'src/auth/dto/payload.dto';
+import { IdPGuard } from 'src/user/guard/idp.guard';
 
 @Controller('post')
 export class PostController {
-  constructor(private readonly postService: PostService) { }
+  constructor(private readonly postService: PostService) {}
 
   @Get()
   @ApiOperation({
@@ -79,10 +78,10 @@ export class PostController {
   @ApiNotFoundResponse({ description: 'User id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(IdPGuard)
   async createPost(
     @Body() postDto: CreatePostDto,
-    @Request() req: Request & { user: PayloadDto },
+    @Request() req: Request & { user: string },
   ): Promise<PostDto> {
     return await this.postService.createPost(postDto, req.user);
   }
@@ -103,11 +102,11 @@ export class PostController {
   @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(IdPGuard)
   async updatePost(
     @Param() { id }: PostIdDto,
     @Body() postDto: CreatePostDto,
-    @Request() req: Request & { user: PayloadDto },
+    @Request() req: Request & { user: string },
   ): Promise<PostDto> {
     return await this.postService.updatePost(id, postDto, req.user);
   }
@@ -126,10 +125,10 @@ export class PostController {
   @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(IdPGuard)
   async joinPost(
     @Param() { id }: PostIdDto,
-    @Request() req: Request & { user: PayloadDto },
+    @Request() req: Request & { user: string },
   ): Promise<PostDto> {
     return await this.postService.joinPost(id, req.user);
   }
@@ -150,11 +149,11 @@ export class PostController {
   @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(IdPGuard)
   async deleteUser(
     @Param('postId') post: string,
     @Param('userId') user: string,
-    @Request() req: Request & { user: PayloadDto },
+    @Request() req: Request & { user: string },
   ): Promise<PostDto> {
     return await this.postService.deleteUser(post, user, req.user);
   }
@@ -174,10 +173,10 @@ export class PostController {
   @ApiNotFoundResponse({ description: 'Post id is not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(IdPGuard)
   async deletePost(
     @Param() { id }: PostIdDto,
-    @Request() req: Request & { user: PayloadDto },
+    @Request() req: Request & { user: string },
   ) {
     return await this.postService.deletePost(id, req.user);
   }

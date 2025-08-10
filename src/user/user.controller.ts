@@ -20,7 +20,6 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { PayloadDto } from 'src/auth/dto/payload.dto';
 import { UserIdDto } from './dto/userId.dto';
 import { LoginDto } from './dto/login.dto';
 import { TokenDto } from './dto/token.dto';
