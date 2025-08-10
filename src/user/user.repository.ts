@@ -2,10 +2,10 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { User } from '@prisma/client';
+import { Post, Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class UserRepository {
@@ -25,11 +25,36 @@ export class UserRepository {
         },
       })
       .catch((error) => {
-        this.logger.debug(error);
-        if (error instanceof PrismaClientKnownRequestError) {
+        this.logger.error(error);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new InternalServerErrorException('Database Error');
         }
         throw new InternalServerErrorException('Internal Server Error');
+      });
+  }
+
+  async findUser(id: string): Promise<User & { posts: Post[] }> {
+    return await this.prisma.user.findUniqueOrThrow({
+      where: { id: id },
+      include: {
+        posts: true,
+      },
+    });
+  }
+
+  async deleteUser(id: string): Promise<User> {
+    return await this.prisma.user
+      .update({
+        where: { id: id },
+        data: { status: 'INACTIVE' },
+      })
+      .catch((error) => {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          if (error.code === 'P2025')
+            throw new NotFoundException('User id is not found');
+          throw new InternalServerErrorException('Database error');
+        }
+        throw new InternalServerErrorException('Internal serval error');
       });
   }
 }
