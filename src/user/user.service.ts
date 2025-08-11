@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { UserRepository } from './user.repository';
 import { UserDto } from './dto/user.dto';
+import { IdpUserInfoDto } from './dto/idpUserInfo.dto';
 
 @Injectable()
 export class UserService {
@@ -64,7 +65,7 @@ export class UserService {
     const userInfo = await this.idpUserInfo(response.access_token);
 
     if (userInfo) {
-      this.userRepository.findOrCreateUser(userInfo);
+      await this.userRepository.findOrCreateUser(userInfo);
       return {
         access_token: response.access_token,
       };
@@ -89,7 +90,7 @@ export class UserService {
     return this.findUser(id);
   }
 
-  async idpUserInfo(token: string) {
+  async idpUserInfo(token: string): Promise<IdpUserInfoDto> {
     return (
       await firstValueFrom(
         this.httpService.get(this.idpUserInfoUrl, {

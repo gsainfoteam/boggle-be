@@ -200,7 +200,7 @@ export class PostRepository {
             throw new NotFoundException('Post id is not found');
           throw new InternalServerErrorException('Database error');
         }
-        throw new InternalServerErrorException('Internal serval error');
+        throw new InternalServerErrorException('Internal server error');
       });
   }
 
@@ -229,7 +229,7 @@ export class PostRepository {
             throw new NotFoundException('Post id is not found');
           throw new InternalServerErrorException('Database error');
         }
-        throw new InternalServerErrorException('Internal serval error');
+        throw new InternalServerErrorException('Internal server error');
       });
   }
 
