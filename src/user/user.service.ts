@@ -98,7 +98,9 @@ export class UserService {
             Authorization: `Bearer ${token}`,
           },
         }),
-      )
+      ).catch((error) => {
+        throw new UnauthorizedException('Token is not authorized');
+      })
     ).data;
   }
 }
