@@ -8,7 +8,6 @@ import { HttpModule } from '@nestjs/axios';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    HttpModule,
     UserModule,
     PostModule,
     ChatModule,

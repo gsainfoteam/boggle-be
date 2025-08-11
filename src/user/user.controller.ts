@@ -38,7 +38,7 @@ export class UserController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get self', description: 'Get self by JWT' })
+  @ApiOperation({ summary: 'Get self', description: 'Get self by token' })
   @ApiOkResponse({ type: UserDto, description: 'Return user information' })
   @ApiNotFoundResponse({ description: 'User Not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
