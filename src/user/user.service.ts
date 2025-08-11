@@ -1,6 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
-  NotFoundException,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
@@ -59,7 +60,11 @@ export class UserService {
             },
           },
         ),
-      )
+      ).catch((error) => {
+        if (error.status === 400)
+          throw new BadRequestException('Code is expired or wrong');
+        throw new InternalServerErrorException('Internal server error');
+      })
     ).data;
 
     const userInfo = await this.idpUserInfo(response.access_token);
@@ -93,13 +98,17 @@ export class UserService {
   async idpUserInfo(token: string): Promise<IdpUserInfoDto> {
     return (
       await firstValueFrom(
-        this.httpService.get(this.idpUserInfoUrl, {
+        await this.httpService.get(this.idpUserInfoUrl, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }),
       ).catch((error) => {
-        throw new UnauthorizedException('Token is not authorized');
+        if (error.status === 400)
+          throw new BadRequestException('Token is expired or wrong');
+        else if (error.status === 401)
+          throw new UnauthorizedException('Token is not authorized');
+        throw new InternalServerErrorException('Internal server error');
       })
     ).data;
   }
