@@ -37,20 +37,16 @@ enum RoomType {
 
 model User {
   id              String @id @default(uuid())
-  email           String @unique
-  password        String
+  sub             String @unique  
+  email           String
   name            String
-  studentId       Int
-  major           String 
-  refreshToken    String?
+  studentId       String
   age             Int?
   gender          String?
   
-  // Post relationships
   posts           Post[]   @relation("UserPosts")
   joinedPosts     Post[]   @relation("PostParticipants")
   
-  // Chat relationships
   connectedUsers  ConnectedUser[] @relation("ChatUser")
   joinedRooms     Room[]   @relation("RoomMembers")
   hostedRooms     Room[]   @relation("RoomHost")

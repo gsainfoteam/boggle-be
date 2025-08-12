@@ -1,6 +1,5 @@
 import { Logger, UnauthorizedException, UseFilters } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
 import { Server } from 'socket.io';
 import { UserPayload } from 'src/types/user-payload.type';
 import { ConnectedUserService } from './services/connected-user.service';
@@ -11,7 +10,15 @@ import { WsCurrentUser } from './common/decorators/ws-currentuser.decorator';
 import { RoomTypeEnum } from './common/enums/room-type.enum';
 import { MessageService } from './services/message.service';
 import { WsValidationPipe } from './common/pipes/ws-validation.pipe';
-import { AssignUsersDto, CreateRoomDto, DeleteRoomDto, LeaveRoomDto, RoomFetchRequestDto, RoomJoinDto, UpdateRoomDto } from './dto/room.dto';
+import {
+  AssignUsersDto,
+  CreateRoomDto,
+  DeleteRoomDto,
+  LeaveRoomDto,
+  RoomFetchRequestDto,
+  RoomJoinDto,
+  UpdateRoomDto,
+} from './dto/room.dto';
 import {
   CreateMessageDto,
   DeleteMessageDto,
@@ -29,6 +36,8 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { ConfigService } from '@nestjs/config';
+import { UserService } from 'src/user/user.service';
+import { UserRepository } from 'src/user/user.repository';
 
 @UseFilters(WsExceptionFilter)
 @WebSocketGateway(3002, { cors: { origin: '*' } })
@@ -36,24 +45,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private readonly logger = new Logger('ChatGateway');
 
-  private readonly jwtSecret;
-  private readonly jwtRefreshSecret;
   private readonly jwtExpire;
 
   constructor(
-    private readonly jwtService: JwtService,
     private readonly roomService: RoomService,
     private readonly connectedUserService: ConnectedUserService,
     private readonly messageService: MessageService,
     private readonly configService: ConfigService,
-  ) { 
-    this.jwtSecret = this.configService.get<string>('JWT_SECRET');
-    this.jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
-    this.jwtExpire = this.configService.get<string>('JWT_EXPIRE')
-
-    if (!this.jwtSecret || !this.jwtRefreshSecret) {
-    throw new Error('JWT secrets are not configured properly');
-  }
+    private readonly userService: UserService,
+    private readonly userRepository: UserRepository,
+  ) {
+    this.jwtExpire = this.configService.get<string>('JWT_EXPIRE');
   }
 
   async onModuleInit(): Promise<void> {
@@ -131,7 +133,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      this.verifyUserAuthorization(room.members, userId)
+      this.verifyUserAuthorization(room.members, userId);
 
       client.emit('roomDetailsFetched', room);
       this.logger.log(
@@ -162,7 +164,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         throw new WsException('Private rooms cannot be updated.');
       }
 
-      this.verifyUserAuthorization(room.members, currentUser.id)
+      this.verifyUserAuthorization(room.members, currentUser.id);
 
       const updatedRoom = await this.roomService.updateRoom(
         updateRoomDto,
@@ -237,7 +239,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId,
       );
 
-      this.verifyUserAuthorization(room.members, userId)
+      this.verifyUserAuthorization(room.members, userId);
 
       const updatedRoom = await this.roomService.assignUsers(
         assignUsersDto,
@@ -379,7 +381,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      this.verifyUserAuthorization(room.members, userId)
+      this.verifyUserAuthorization(room.members, userId);
 
       const newMessage = await this.messageService.createMessage({
         ...createMessageDto,
@@ -414,7 +416,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      this.verifyUserAuthorization(room.members, userId)
+      this.verifyUserAuthorization(room.members, userId);
 
       const messages = await this.messageService.findByRoomId(
         filterMessageDto.roomId,
@@ -475,7 +477,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const room = await this.roomService.findRoomById(roomId);
-      this.verifyUserAuthorization(room.members, userId)
+      this.verifyUserAuthorization(room.members, userId);
 
       await this.messageService.deleteMany(userId, deleteMessageDto);
 
@@ -503,9 +505,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           'No authentication token provided via handshake.auth.',
         );
       }
-      const userPayload = this.jwtService.verify<UserPayload>(token, {
-        secret: this.jwtSecret,
-      });
+      const userInfo = await this.userService.idpUserInfo(token);
+      const userPayload = await this.userRepository.findOrCreateUser(userInfo);
+
       return userPayload;
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
@@ -558,7 +560,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     userId: string,
   ): void {
     if (participants.includes(userId)) {
-      throw new WsException('Host should not be included in participants list.');
+      throw new WsException(
+        'Host should not be included in participants list.',
+      );
     }
 
     if (new Set(participants).size !== participants.length) {
@@ -567,7 +571,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (roomType === RoomTypeEnum.PRIVATE) {
       if (operation === 'create' && participants.length !== 1) {
-        throw new WsException('Private chat must have exactly one participant.');
+        throw new WsException(
+          'Private chat must have exactly one participant.',
+        );
       }
       if (operation === 'assign' || operation === 'delete') {
         throw new WsException(`Cannot ${operation} users in private chat.`);
@@ -575,8 +581,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     if (roomType === RoomTypeEnum.GROUP) {
-      if(participants.length<1 && (operation === 'assign' || operation === 'delete')){
-        throw new WsException(`Cannot ${operation} ${participants.length} users`)
+      if (
+        participants.length < 1 &&
+        (operation === 'assign' || operation === 'delete')
+      ) {
+        throw new WsException(
+          `Cannot ${operation} ${participants.length} users`,
+        );
       }
     }
   }
@@ -600,9 +611,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       notificationPromises.map((np) => np.promise),
     );
 
-    const failures = results.filter(r => r.status === 'rejected').length;
+    const failures = results.filter((r) => r.status === 'rejected').length;
     if (failures > 0) {
-      this.logger.warn(`Failed to notify ${failures}/${connectedUsers.length} users for event '${event}'`);
+      this.logger.warn(
+        `Failed to notify ${failures}/${connectedUsers.length} users for event '${event}'`,
+      );
     }
   }
 
@@ -620,41 +633,5 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       });
     });
-  }
-
-  @SubscribeMessage('refreshToken')
-  async onRefreshToken(
-    @WsCurrentUser() currentUser: UserPayload,
-    @MessageBody() refreshTokenDto: { refreshToken: string },
-    @ConnectedSocket() socket: Socket,
-  ): Promise<void> {
-    try {
-      const refreshPayload = this.jwtService.verify<UserPayload>(
-        refreshTokenDto.refreshToken,
-        {
-          secret: this.jwtRefreshSecret,
-        },
-      );
-
-      if (refreshPayload.id !== currentUser.id) {
-        throw new WsException('Invalid refresh token.');
-      }
-
-      const newAccessToken = this.jwtService.sign(
-        { id: currentUser.id, email: currentUser.email },
-        { secret: this.jwtSecret, expiresIn: this.jwtExpire },
-      );
-
-      socket.emit('tokenRefreshed', { accessToken: newAccessToken });
-      this.logger.log(
-        `Token refreshed successfully for User ID ${currentUser.id}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Token refresh failed for User ID ${currentUser.id}: ${error.message}`,
-        error.stack,
-      );
-      throw new WsException('Error occurred while refreshing token.');
-    }
   }
 }

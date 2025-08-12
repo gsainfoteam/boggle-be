@@ -3,7 +3,8 @@ import { PostRepository } from './post.repository';
 import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListQueryDto } from './dto/postList.dto';
-import { PayloadDto } from 'src/auth/dto/payload.dto';
+import { UserIdDto } from 'src/user/dto/userId.dto';
+import { Post } from '@prisma/client';
 
 @Injectable()
 export class PostService {
@@ -21,7 +22,9 @@ export class PostService {
           id: post.authorId,
           name: post.author.name,
         },
-        participants: post.participants,
+        participants: post.participants.map((participant) => {
+          return { id: participant.id, name: participant.name };
+        }),
         maxParticipants: post.maxParticipants,
         createdAt: post.createdAt,
         deadline: post.deadline,
@@ -44,7 +47,9 @@ export class PostService {
         id: post.authorId,
         name: post.author.name,
       },
-      participants: post.participants,
+      participants: post.participants.map((participant) => {
+        return { id: participant.id, name: participant.name };
+      }),
       maxParticipants: post.maxParticipants,
       createdAt: post.createdAt,
       deadline: post.deadline,
@@ -52,8 +57,8 @@ export class PostService {
     };
   }
 
-  async createPost(postDto: CreatePostDto, user: PayloadDto): Promise<PostDto> {
-    const post = await this.postRepository.createPost(postDto, user.id);
+  async createPost(postDto: CreatePostDto, user: string): Promise<PostDto> {
+    const post = await this.postRepository.createPost(postDto, user);
 
     return this.getPost(post.id);
   }
@@ -61,35 +66,35 @@ export class PostService {
   async updatePost(
     id: string,
     postDto: CreatePostDto,
-    user: PayloadDto,
+    user: string,
   ): Promise<PostDto> {
     const authorId = (await this.postRepository.getPost(id)).authorId;
-    if (authorId !== user.id) throw new ForbiddenException('Not match user id');
+    if (authorId !== user) throw new ForbiddenException('Not match user id');
 
     await this.postRepository.updatePost(id, postDto);
     return this.getPost(id);
   }
 
-  async joinPost(id: string, user: PayloadDto): Promise<PostDto> {
-    await this.postRepository.joinPost(id, user.id);
+  async joinPost(id: string, user: string): Promise<PostDto> {
+    await this.postRepository.joinPost(id, user);
     return this.getPost(id);
   }
 
   async deleteUser(
     postId: string,
     userId: string,
-    user: PayloadDto,
+    user: string,
   ): Promise<PostDto> {
     const post = await this.getPost(postId);
-    if (user.id !== post.author.id && user.id !== userId)
+    if (user !== post.author.id && user !== userId)
       throw new ForbiddenException('Forbidden Access');
     await this.postRepository.deleteUser(postId, userId);
     return await this.getPost(postId);
   }
 
-  async deletePost(id: string, user: PayloadDto) {
+  async deletePost(id: string, user: string): Promise<Post> {
     const authorId = (await this.postRepository.getPost(id)).authorId;
-    if (authorId !== user.id) throw new ForbiddenException('Not match user id');
+    if (authorId !== user) throw new ForbiddenException('Not match user id');
 
     return await this.postRepository.deletePost(id);
   }

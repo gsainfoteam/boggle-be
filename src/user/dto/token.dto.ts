@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 
-export class UpdateUserDto {
+export class TokenDto {
   @IsString()
-  @ApiProperty({ example: 'abcde' })
-  readonly password: string;
+  @ApiProperty({ example: 'abc' })
+  readonly access_token: string;
 }

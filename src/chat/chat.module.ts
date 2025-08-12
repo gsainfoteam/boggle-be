@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ChatGateway } from './chat-gateway';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AuthModule } from 'src/auth/auth.module';
 import { RoomService } from './services/room.service';
 import { ConnectedUserService } from './services/connected-user.service';
 import { MessageService } from './services/message.service';
 import { RoomRepository } from './services/room.repository';
 import { ConnectedUserRepository } from './services/connected-user.repository';
 import { MessageRepository } from './services/message.repository';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { UserService } from 'src/user/user.service';
+import { UserRepository } from 'src/user/user.repository';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-  imports: [AuthModule, JwtModule],
+  imports: [UserModule],
   providers: [
     ChatGateway,
     PrismaService,
@@ -21,7 +22,6 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
     RoomRepository,
     ConnectedUserRepository,
     MessageRepository,
-    JwtService,
   ],
 })
 export class ChatModule {}
