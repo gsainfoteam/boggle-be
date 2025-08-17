@@ -5,14 +5,12 @@ import {
   Param,
   Delete,
   UseGuards,
-  Patch,
   Request,
   Post,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,

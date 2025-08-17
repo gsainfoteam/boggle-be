@@ -1,6 +1,13 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateMessageDto {
   @ApiProperty({ required: true })
@@ -14,7 +21,7 @@ export class CreateMessageDto {
   @IsNotEmpty()
   content: string;
 
-  @ApiProperty({required: false })
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   @IsNotEmpty()
@@ -36,9 +43,7 @@ export class DeleteMessageDto {
   messageIds: string[];
 }
 
-
 export class MessageDto {
-
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   roomId: string;
 
@@ -54,7 +59,6 @@ export class MessageDto {
   @ApiProperty({ example: '2023-01-02T00:00:00.000Z' })
   updatedAt: Date;
 }
-
 
 export class UpdateMessageDto {
   @ApiProperty({ required: true })

@@ -21,7 +21,7 @@ export class ConnectedUserService {
         `Failed to create connected user for ${userPayload.id}`,
         error.stack,
       );
-      throw error; 
+      throw error;
     }
   }
 
@@ -29,8 +29,11 @@ export class ConnectedUserService {
     try {
       return await this.connectedUserRepository.delete(socketId);
     } catch (error) {
-      this.logger.error(`Failed to delete connected user ${socketId}`, error.stack);
-      throw error; 
+      this.logger.error(
+        `Failed to delete connected user ${socketId}`,
+        error.stack,
+      );
+      throw error;
     }
   }
 
@@ -45,7 +48,9 @@ export class ConnectedUserService {
     }
   }
 
-  async findConnectedUsersByUserIds(userIds: string[]): Promise<ConnectedUser[]> {
+  async findConnectedUsersByUserIds(
+    userIds: string[],
+  ): Promise<ConnectedUser[]> {
     if (!userIds?.length) {
       return [];
     }

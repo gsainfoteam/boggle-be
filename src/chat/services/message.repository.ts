@@ -11,23 +11,30 @@ import { Message } from '@prisma/client';
 
 @Injectable()
 export class MessageRepository {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   private readonly baseWhereDeleted = {
     isDeleted: false,
     deletedAt: null,
   };
 
-  async createMessage({ roomId, content, senderId }: CreateMessageDto): Promise<Message> {
+  async createMessage({
+    roomId,
+    content,
+    senderId,
+  }: CreateMessageDto): Promise<Message> {
     try {
       await this.prisma.room.findFirstOrThrow({
         where: {
           id: roomId,
           ...this.baseWhereDeleted,
-        }
+        },
       });
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new WsException('Room not found or has been deleted');
       }
       throw error;
@@ -57,10 +64,13 @@ export class MessageRepository {
         where: {
           id: roomId,
           ...this.baseWhereDeleted,
-        }
+        },
       });
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new WsException('Room not found or has been deleted');
       }
       throw error;
@@ -69,14 +79,14 @@ export class MessageRepository {
     return await this.prisma.message.findMany({
       where: {
         roomId,
-        ...this.baseWhereDeleted
+        ...this.baseWhereDeleted,
       },
       include: {
         sender: true,
       },
       orderBy: {
-        createdAt: 'asc'
-      }
+        createdAt: 'asc',
+      },
     });
   }
 
@@ -85,23 +95,29 @@ export class MessageRepository {
       return await this.prisma.message.findUniqueOrThrow({
         where: {
           id: uuid,
-          ...this.baseWhereDeleted
+          ...this.baseWhereDeleted,
         },
       });
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException('Message not found');
       }
       throw new WsException('Failed to retrieve message');
     }
   }
 
-  async updateMessage({ messageId, content }: UpdateMessageDto): Promise<Message> {
+  async updateMessage({
+    messageId,
+    content,
+  }: UpdateMessageDto): Promise<Message> {
     try {
       return await this.prisma.message.update({
         where: {
           id: messageId,
-          ...this.baseWhereDeleted
+          ...this.baseWhereDeleted,
         },
         data: {
           content: content,
@@ -109,19 +125,25 @@ export class MessageRepository {
         },
       });
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException('Message not found or has been deleted');
       }
       throw new WsException('Failed to update message');
     }
   }
 
-  async deleteMany(userId: string, { roomId, messageIds }: DeleteMessageDto): Promise<{ count: number }> {
+  async deleteMany(
+    userId: string,
+    { roomId, messageIds }: DeleteMessageDto,
+  ): Promise<{ count: number }> {
     const isRoomExisting = await this.prisma.room.findFirstOrThrow({
       where: {
         id: roomId,
         ...this.baseWhereDeleted,
-      }
+      },
     });
 
     const messages = await this.prisma.message.findMany({
@@ -140,7 +162,9 @@ export class MessageRepository {
       (id) => !messages.find((msg) => msg.id === id),
     );
     if (notFoundIds.length > 0) {
-      throw new WsException(`Messages not found or already deleted: ${notFoundIds.join(', ')}`);
+      throw new WsException(
+        `Messages not found or already deleted: ${notFoundIds.join(', ')}`,
+      );
     }
 
     try {
@@ -173,7 +197,9 @@ export class MessageRepository {
       });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new WsException(`Database error when restoring messages: ${error.message}`);
+        throw new WsException(
+          `Database error when restoring messages: ${error.message}`,
+        );
       }
       throw new WsException('Failed to restore messages');
     }
