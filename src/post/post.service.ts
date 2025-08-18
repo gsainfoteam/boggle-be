@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PostRepository } from './post.repository';
 import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
-import { PostListQueryDto } from './dto/postList.dto';
+import { PostListDto, PostListQueryDto } from './dto/postList.dto';
 import { UserIdDto } from 'src/user/dto/userId.dto';
 import { Post } from '@prisma/client';
 
@@ -10,26 +10,9 @@ import { Post } from '@prisma/client';
 export class PostService {
   constructor(private readonly postRepository: PostRepository) {}
 
-  async getPostList(query: PostListQueryDto) {
+  async getPostList(query: PostListQueryDto): Promise<PostListDto> {
     const posts = (await this.postRepository.getPostList(query)).map((post) => {
-      return {
-        id: post.id,
-        title: post.title,
-        content: post.content,
-        type: post.type,
-        tags: post.tags,
-        author: {
-          id: post.authorId,
-          name: post.author.name,
-        },
-        participants: post.participants.map((participant) => {
-          return { id: participant.id, name: participant.name };
-        }),
-        maxParticipants: post.maxParticipants,
-        createdAt: post.createdAt,
-        deadline: post.deadline,
-        ...(post.roommateDetails && { roommateDetails: post.roommateDetails }),
-      };
+      return new PostDto({ ...post });
     });
     const total = await this.postRepository.getCount(query.type);
     return { posts: posts, total: total };
@@ -37,24 +20,7 @@ export class PostService {
 
   async getPost(id: string): Promise<PostDto> {
     const post = await this.postRepository.getPost(id);
-    return {
-      id: post.id,
-      title: post.title,
-      content: post.content,
-      type: post.type,
-      tags: post.tags,
-      author: {
-        id: post.authorId,
-        name: post.author.name,
-      },
-      participants: post.participants.map((participant) => {
-        return { id: participant.id, name: participant.name };
-      }),
-      maxParticipants: post.maxParticipants,
-      createdAt: post.createdAt,
-      deadline: post.deadline,
-      ...(post.roommateDetails && { roommateDetails: post.roommateDetails }),
-    };
+    return new PostDto({ ...post });
   }
 
   async createPost(postDto: CreatePostDto, user: string): Promise<PostDto> {
