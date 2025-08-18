@@ -39,7 +39,13 @@ export class UserRepository {
       .findUniqueOrThrow({
         where: { id: id },
         include: {
-          posts: true,
+          posts: {
+            include: {
+              author: true,
+              participants: true,
+              roommateDetails: true,
+            },
+          },
         },
       })
       .catch((error) => {

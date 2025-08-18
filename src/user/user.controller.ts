@@ -7,6 +7,8 @@ import {
   UseGuards,
   Request,
   Post,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -26,6 +28,7 @@ import { UserDto } from './dto/user.dto';
 import { IdPGuard } from './guard/idp.guard';
 
 @Controller('user')
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

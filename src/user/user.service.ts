@@ -73,7 +73,8 @@ export class UserService {
   }
 
   async findUser(id: string): Promise<UserDto> {
-    return await this.userRepository.findUser(id);
+    const user = await this.userRepository.findUser(id);
+    return new UserDto({ ...user });
   }
 
   async deleteUser(id: string): Promise<UserDto> {
