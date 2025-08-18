@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Post, UserStatus } from '@prisma/client';
-import { Transform, plainToInstance } from 'class-transformer';
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsString } from 'class-validator';
 import { PostDto } from 'src/post/dto/post.dto';
 
 export class UserDto {

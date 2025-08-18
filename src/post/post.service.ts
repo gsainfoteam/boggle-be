@@ -3,7 +3,6 @@ import { PostRepository } from './post.repository';
 import { PostDto } from './dto/post.dto';
 import { CreatePostDto } from './dto/createPost.dto';
 import { PostListDto, PostListQueryDto } from './dto/postList.dto';
-import { UserIdDto } from 'src/user/dto/userId.dto';
 import { Post } from '@prisma/client';
 
 @Injectable()

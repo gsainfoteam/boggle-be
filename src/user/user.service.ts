@@ -4,8 +4,6 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
-import { PostDto } from 'src/post/dto/post.dto';
 import { firstValueFrom } from 'rxjs';
 import { TokenDto } from './dto/token.dto';
 import { ConfigService } from '@nestjs/config';
