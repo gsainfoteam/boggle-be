@@ -22,7 +22,6 @@ export class UserDto {
   readonly studentId: string;
 
   @IsArray()
-  @Transform(({ value }: { value: Post[] }) => plainToInstance(PostDto, value))
   @ApiProperty({ type: [PostDto] })
   readonly posts: PostDto[] | Post[];
 
