@@ -29,7 +29,7 @@ export class PostDto {
   readonly content: string;
 
   @IsEnum(PostType)
-  @ApiProperty({ example: 'type' })
+  @ApiProperty({ enum: PostType, example: PostType.ROOMMATE })
   readonly type: PostType;
 
   @IsArray()
