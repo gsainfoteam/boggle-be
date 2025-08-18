@@ -7,8 +7,6 @@ import { MessageService } from './services/message.service';
 import { RoomRepository } from './services/room.repository';
 import { ConnectedUserRepository } from './services/connected-user.repository';
 import { MessageRepository } from './services/message.repository';
-import { UserService } from 'src/user/user.service';
-import { UserRepository } from 'src/user/user.repository';
 import { UserModule } from 'src/user/user.module';
 
 @Module({

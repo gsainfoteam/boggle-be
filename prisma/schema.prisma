@@ -18,6 +18,7 @@ enum PostType {
   PROJECT
   DELIVERY
   ROOMMATE
+  OTHER
 }
 
 enum UserStatus {
@@ -57,7 +58,7 @@ model User {
 
 model Post {
   id              String @id @default(uuid())
-  title           String
+  title           String?
   content         String 
   type            PostType 
   roommateDetails RoommateDetails? @relation("RoommateDetails")

@@ -1,15 +1,16 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
   Param,
-  Patch,
   Post,
   Put,
   Query,
   Request,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostIdDto } from './dto/postId.dto';
@@ -30,6 +31,7 @@ import { PostListDto, PostListQueryDto } from './dto/postList.dto';
 import { IdPGuard } from 'src/user/guard/idp.guard';
 
 @Controller('post')
+@UseInterceptors(ClassSerializerInterceptor)
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
