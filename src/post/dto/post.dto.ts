@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsDate,
+  IsEnum,
   IsNumber,
   IsObject,
   IsOptional,
@@ -27,7 +28,7 @@ export class PostDto {
   @ApiProperty({ example: 'this is content' })
   readonly content: string;
 
-  @IsString()
+  @IsEnum(PostType)
   @ApiProperty({ example: 'type' })
   readonly type: PostType;
 
