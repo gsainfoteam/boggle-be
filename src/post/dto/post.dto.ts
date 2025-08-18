@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsDate,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   ValidateNested,
@@ -35,7 +36,7 @@ export class PostDto {
   @ApiProperty({ example: ['abc', 'def'] })
   readonly tags: string[];
 
-  @IsString()
+  @IsObject()
   @Transform(({ value }: { value: User }) => {
     return { id: value.id, name: value.name };
   })
