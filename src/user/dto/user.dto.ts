@@ -27,8 +27,4 @@ export class UserDto {
   @IsString()
   @ApiProperty({ example: 'ACTIVE' })
   readonly status: UserStatus;
-
-  constructor(partial: Partial<UserDto>) {
-    Object.assign(this, partial);
-  }
 }
