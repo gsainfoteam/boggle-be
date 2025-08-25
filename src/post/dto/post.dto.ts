@@ -62,7 +62,7 @@ export class PostDto {
 
   @IsDate()
   @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
-  readonly deadline: Date;
+  readonly deadline?: Date | null;
 
   @IsOptional()
   @ValidateNested()
