@@ -134,7 +134,6 @@ export class PostRepository {
           type: post.type,
           tags: post.tags,
           maxParticipants: post.maxParticipants,
-          createdAt: new Date(new Date().getTime()),
           ...(post.deadline && { deadline: post.deadline }),
           ...(post.type === 'ROOMMATE' &&
             post.roommateDetails && {
