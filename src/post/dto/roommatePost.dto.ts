@@ -6,7 +6,7 @@ export class RoommatePostDto {
   @ApiProperty({ example: 20 })
   readonly age: number;
 
-  @IsNumber()
+  @IsString()
   @ApiProperty({ example: 'male' })
   readonly gender: string;
 
