@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserStatus } from '@prisma/client';
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { Post, UserStatus } from '@prisma/client';
+import { Transform } from 'class-transformer';
+import { IsArray, IsString } from 'class-validator';
 import { PostDto } from 'src/post/dto/post.dto';
 
 export class UserDto {
@@ -21,10 +22,17 @@ export class UserDto {
   readonly studentId: string;
 
   @IsArray()
+  @Transform(({ value }: { value: Post[] }) =>
+    value.map((post) => new PostDto(post)),
+  )
   @ApiProperty({ type: [PostDto] })
-  readonly posts: PostDto[];
+  readonly posts: PostDto[] | Post[];
 
   @IsString()
   @ApiProperty({ example: 'ACTIVE' })
   readonly status: UserStatus;
+
+  constructor(partial: Partial<UserDto>) {
+    Object.assign(this, partial);
+  }
 }

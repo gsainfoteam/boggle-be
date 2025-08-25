@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse, isAxiosError } from 'axios';
 
@@ -90,14 +89,7 @@ export class UserService {
 
   async findUser(id: string): Promise<UserDto> {
     const user = await this.userRepository.findUser(id);
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      studentId: user.studentId,
-      posts: plainToInstance(PostDto, user.posts),
-      status: user.status,
-    };
+    return new UserDto({ ...user });
   }
 
   async deleteUser(id: string): Promise<UserDto> {
