@@ -14,7 +14,7 @@ import { UserRepository } from './user.repository';
 import { TokenDto } from './dto/token.dto';
 import { UserDto } from './dto/user.dto';
 import { IdpUserInfoDto } from './dto/idpUserInfo.dto';
-import { PostDto } from 'src/post/dto/post.dto';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class UserService {
@@ -48,15 +48,9 @@ export class UserService {
   }
 
   async login(code: string): Promise<TokenDto> {
-    const authHeader = `Basic ${Buffer.from(
-      `${this.clientId}:${this.clientSecret}`,
-    ).toString('base64')}`;
-
-    type TokenResponse = { access_token: string };
-
-    try {
-      const response: AxiosResponse<TokenResponse> = await firstValueFrom(
-        this.httpService.post<TokenResponse>(
+    const response = (
+      await firstValueFrom(
+        this.httpService.post(
           this.idpTokenUrl,
           new URLSearchParams({
             grant_type: 'authorization_code',
@@ -70,15 +64,16 @@ export class UserService {
             },
           },
         ),
-      );
+      ).catch((error) => {
+        if (error.status === 400)
+          throw new BadRequestException('Code is expired or wrong');
+        throw new InternalServerErrorException('Internal server error');
+      })
+    ).data;
 
-      const accessToken = response.data.access_token;
+    const userInfo = await this.idpUserInfo(response.access_token);
 
-      const userInfo = await this.idpUserInfo(accessToken);
-      if (!userInfo) {
-        throw new UnauthorizedException();
-      }
-
+    if (userInfo) {
       await this.userRepository.findOrCreateUser(userInfo);
 
       return { access_token: accessToken };
@@ -98,15 +93,20 @@ export class UserService {
   }
 
   async idpUserInfo(token: string): Promise<IdpUserInfoDto> {
-    try {
-      const res: AxiosResponse<IdpUserInfoDto> = await firstValueFrom(
-        this.httpService.get<IdpUserInfoDto>(this.idpUserInfoUrl, {
-          headers: { Authorization: `Bearer ${token}` },
+    return (
+      await firstValueFrom(
+        await this.httpService.get(this.idpUserInfoUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }),
-      );
-      return res.data;
-    } catch (error) {
-      this.handleAxiosError(error);
-    }
+      ).catch((error) => {
+        if (error.status === 400)
+          throw new BadRequestException('Token is expired or wrong');
+        else if (error.status === 401)
+          throw new UnauthorizedException('Token is not authorized');
+        throw new InternalServerErrorException('Internal server error');
+      })
+    ).data;
   }
 }

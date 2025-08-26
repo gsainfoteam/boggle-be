@@ -32,10 +32,11 @@ export class CreatePostDto {
   @ApiProperty({ example: 5 })
   readonly maxParticipants: number;
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
   @ApiProperty({ example: '2000-01-01' })
-  readonly deadline: Date;
+  readonly deadline?: Date;
 
   @IsOptional()
   @Type(() => RoommatePostDto)

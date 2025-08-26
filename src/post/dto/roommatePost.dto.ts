@@ -1,7 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class RoommatePostDto {
+  @IsNumber()
+  @ApiProperty({ example: 20 })
+  readonly age: number;
+
+  @IsString()
+  @ApiProperty({ example: 'male' })
+  readonly gender: string;
+
   @IsNumber()
   @ApiProperty({ example: 1 })
   readonly grade: number;
@@ -30,35 +38,38 @@ export class RoommatePostDto {
   @ApiProperty({ example: true })
   readonly smoking: boolean;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({ example: '22:00' })
-  readonly sleepTime: string;
+  readonly sleepTime?: string;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({ example: '08:00' })
-  readonly wakeUpTime: string;
+  readonly wakeUpTime?: string;
 
+  @IsOptional()
   @IsString()
   @ApiProperty({ example: 'INTJ' })
-  readonly mbti: string;
+  readonly mbti?: string;
 
+  @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmRefrigerator: boolean;
+  readonly rmRefrigerator?: boolean;
 
+  @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmWifi: boolean;
+  readonly rmWifi?: boolean;
 
+  @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmSnoring: boolean;
+  readonly rmSnoring?: boolean;
 
+  @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmSmoking: boolean;
-
-  @IsString()
-  @ApiProperty({ example: 'INTJ' })
-  readonly rmMbti: string;
+  readonly rmSmoking?: boolean;
 }

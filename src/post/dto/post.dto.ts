@@ -60,15 +60,16 @@ export class PostDto {
   @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
   readonly createdAt: Date;
 
+  @IsOptional()
   @IsDate()
   @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
-  readonly deadline: Date;
+  readonly deadline?: Date;
 
   @IsOptional()
   @ValidateNested()
   @Type(() => RoommatePostDto)
   @ApiPropertyOptional({ type: RoommatePostDto })
-  readonly roommateDetails?: RoommatePostDto | null;
+  readonly roommateDetails?: RoommatePostDto;
 
   constructor(partial: Partial<PostDto>) {
     Object.assign(this, partial);
