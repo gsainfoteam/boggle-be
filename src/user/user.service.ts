@@ -11,6 +11,7 @@ import { HttpService } from '@nestjs/axios';
 import { UserRepository } from './user.repository';
 import { UserDto } from './dto/user.dto';
 import { IdpUserInfoDto } from './dto/idpUserInfo.dto';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class UserService {
@@ -38,7 +39,7 @@ export class UserService {
   async login(code: string): Promise<TokenDto> {
     const response = (
       await firstValueFrom(
-        this.httpService.post(
+        this.httpService.post<TokenDto>(
           this.idpTokenUrl,
           new URLSearchParams({
             grant_type: 'authorization_code',
@@ -54,8 +55,8 @@ export class UserService {
             },
           },
         ),
-      ).catch((error) => {
-        if (error.status === 400)
+      ).catch((error: AxiosError) => {
+        if (error.response?.status === 400)
           throw new BadRequestException('Code is expired or wrong');
         throw new InternalServerErrorException('Internal server error');
       })
@@ -85,15 +86,15 @@ export class UserService {
   async idpUserInfo(token: string): Promise<IdpUserInfoDto> {
     return (
       await firstValueFrom(
-        await this.httpService.get(this.idpUserInfoUrl, {
+        this.httpService.get<IdpUserInfoDto>(this.idpUserInfoUrl, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }),
-      ).catch((error) => {
-        if (error.status === 400)
+      ).catch((error: AxiosError) => {
+        if (error.response?.status === 400)
           throw new BadRequestException('Token is expired or wrong');
-        else if (error.status === 401)
+        else if (error.response?.status === 401)
           throw new UnauthorizedException('Token is not authorized');
         throw new InternalServerErrorException('Internal server error');
       })

@@ -66,7 +66,7 @@ export class PostRepository {
     return await this.prisma.post
       .create({
         data: {
-          title: post.title,
+          ...(post.title && { title: post.title }),
           content: post.content,
           type: post.type,
           tags: post.tags,
@@ -74,12 +74,14 @@ export class PostRepository {
           participants: { connect: [{ id: authorId }] },
           maxParticipants: post.maxParticipants,
           createdAt: new Date(new Date().getTime()),
-          deadline: post.deadline,
+          ...(post.deadline && { deadline: post.deadline }),
           imageUrls: post.imageUrls,
           ...(post.type === 'ROOMMATE' &&
             post.roommateDetails && {
               roommateDetails: {
                 create: {
+                  age: post.roommateDetails.age,
+                  gender: post.roommateDetails.gender,
                   grade: post.roommateDetails.grade,
                   room: post.roommateDetails.room,
                   semester: post.roommateDetails.semester,
@@ -88,15 +90,28 @@ export class PostRepository {
                   wifi: post.roommateDetails.wifi,
                   snoring: post.roommateDetails.snoring,
                   smoking: post.roommateDetails.smoking,
-                  sleepTime: post.roommateDetails.sleepTime,
-                  wakeUpTime: post.roommateDetails.wakeUpTime,
-                  mbti: post.roommateDetails.mbti,
+                  ...(post.roommateDetails.sleepTime && {
+                    sleepTime: post.roommateDetails.sleepTime,
+                  }),
+                  ...(post.roommateDetails.wakeUpTime && {
+                    wakeUpTime: post.roommateDetails.wakeUpTime,
+                  }),
+                  ...(post.roommateDetails.mbti && {
+                    mbti: post.roommateDetails.mbti,
+                  }),
 
-                  rmRefrigerator: post.roommateDetails.rmRefrigerator,
-                  rmWifi: post.roommateDetails.rmWifi,
-                  rmSnoring: post.roommateDetails.rmSnoring,
-                  rmSmoking: post.roommateDetails.rmSmoking,
-                  rmMbti: post.roommateDetails.rmMbti,
+                  ...(post.roommateDetails.rmRefrigerator && {
+                    rmRefrigerator: post.roommateDetails.rmRefrigerator,
+                  }),
+                  ...(post.roommateDetails.rmWifi && {
+                    rmWifi: post.roommateDetails.rmWifi,
+                  }),
+                  ...(post.roommateDetails.rmSnoring && {
+                    rmSnoring: post.roommateDetails.rmSnoring,
+                  }),
+                  ...(post.roommateDetails.rmSmoking && {
+                    rmSmoking: post.roommateDetails.rmSmoking,
+                  }),
                 },
               },
             }),
@@ -115,17 +130,19 @@ export class PostRepository {
       .update({
         where: { id: id },
         data: {
-          title: post.title,
+          ...(post.title && { title: post.title }),
           content: post.content,
           type: post.type,
           tags: post.tags,
           maxParticipants: post.maxParticipants,
-          deadline: post.deadline,
+          ...(post.deadline && { deadline: post.deadline }),
           imageUrls: post.imageUrls,
           ...(post.type === 'ROOMMATE' &&
             post.roommateDetails && {
               roommateDetails: {
                 create: {
+                  age: post.roommateDetails.age,
+                  gender: post.roommateDetails.gender,
                   grade: post.roommateDetails.grade,
                   room: post.roommateDetails.room,
                   semester: post.roommateDetails.semester,
@@ -134,15 +151,28 @@ export class PostRepository {
                   wifi: post.roommateDetails.wifi,
                   snoring: post.roommateDetails.snoring,
                   smoking: post.roommateDetails.smoking,
-                  sleepTime: post.roommateDetails.sleepTime,
-                  wakeUpTime: post.roommateDetails.wakeUpTime,
-                  mbti: post.roommateDetails.mbti,
+                  ...(post.roommateDetails.sleepTime && {
+                    sleepTime: post.roommateDetails.sleepTime,
+                  }),
+                  ...(post.roommateDetails.wakeUpTime && {
+                    wakeUpTime: post.roommateDetails.wakeUpTime,
+                  }),
+                  ...(post.roommateDetails.mbti && {
+                    mbti: post.roommateDetails.mbti,
+                  }),
 
-                  rmRefrigerator: post.roommateDetails.rmRefrigerator,
-                  rmWifi: post.roommateDetails.rmWifi,
-                  rmSnoring: post.roommateDetails.rmSnoring,
-                  rmSmoking: post.roommateDetails.rmSmoking,
-                  rmMbti: post.roommateDetails.rmMbti,
+                  ...(post.roommateDetails.rmRefrigerator && {
+                    rmRefrigerator: post.roommateDetails.rmRefrigerator,
+                  }),
+                  ...(post.roommateDetails.rmWifi && {
+                    rmWifi: post.roommateDetails.rmWifi,
+                  }),
+                  ...(post.roommateDetails.rmSnoring && {
+                    rmSnoring: post.roommateDetails.rmSnoring,
+                  }),
+                  ...(post.roommateDetails.rmSmoking && {
+                    rmSmoking: post.roommateDetails.rmSmoking,
+                  }),
                 },
               },
             }),

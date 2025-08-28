@@ -13,7 +13,6 @@ import {
 import { UserService } from './user.service';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -34,6 +33,7 @@ export class UserController {
 
   @Post('login')
   @ApiOperation({ summary: 'create a user' })
+  @ApiOkResponse({ type: TokenDto, description: 'Return access token' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   async login(@Body() { code }: LoginDto): Promise<TokenDto> {
     return await this.userService.login(code);

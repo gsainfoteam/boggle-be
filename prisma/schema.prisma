@@ -68,13 +68,15 @@ model Post {
   participants    User[]  @relation("PostParticipants")
   maxParticipants Int
   createdAt       DateTime @default(now())
-  deadline        DateTime
+  deadline        DateTime?
   imageUrls       String[]
   status          PostStatus @default(OPEN)
 }
 
 model RoommateDetails {
   id              String @id @default(uuid())
+  age             Int
+  gender          String
   grade           Int
   room            String
   semester        String
@@ -82,14 +84,13 @@ model RoommateDetails {
   wifi            Boolean 
   snoring         Boolean
   smoking         Boolean
-  sleepTime       String
-  wakeUpTime      String
-  mbti            String
-  rmRefrigerator  Boolean
-  rmWifi          Boolean
-  rmSnoring       Boolean
-  rmSmoking       Boolean
-  rmMbti          String
+  sleepTime       String?
+  wakeUpTime      String?
+  mbti            String?
+  rmRefrigerator  Boolean?
+  rmWifi          Boolean?
+  rmSnoring       Boolean?
+  rmSmoking       Boolean?
   
   post            Post @relation("RoommateDetails", fields: [postId], references: [id])
   postId          String @unique
