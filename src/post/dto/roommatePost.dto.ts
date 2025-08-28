@@ -41,35 +41,35 @@ export class RoommatePostDto {
   @IsOptional()
   @IsString()
   @ApiProperty({ example: '22:00' })
-  readonly sleepTime?: string;
+  readonly sleepTime?: string | null;
 
   @IsOptional()
   @IsString()
   @ApiProperty({ example: '08:00' })
-  readonly wakeUpTime?: string;
+  readonly wakeUpTime?: string | null;
 
   @IsOptional()
   @IsString()
   @ApiProperty({ example: 'INTJ' })
-  readonly mbti?: string;
+  readonly mbti?: string | null;
 
   @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmRefrigerator?: boolean;
+  readonly rmRefrigerator?: boolean | null;
 
   @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmWifi?: boolean;
+  readonly rmWifi?: boolean | null;
 
   @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmSnoring?: boolean;
+  readonly rmSnoring?: boolean | null;
 
   @IsOptional()
   @IsBoolean()
   @ApiProperty({ example: true })
-  readonly rmSmoking?: boolean;
+  readonly rmSmoking?: boolean | null;
 }

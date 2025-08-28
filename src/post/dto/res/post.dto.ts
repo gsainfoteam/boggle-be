@@ -31,7 +31,7 @@ export class PostDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ example: 'this is title' })
-  readonly title?: string | null;
+  readonly title: string | null;
 
   @IsString()
   @ApiProperty({ example: 'this is content' })
@@ -72,7 +72,7 @@ export class PostDto {
   @IsOptional()
   @IsDate()
   @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
-  readonly deadline?: Date;
+  readonly deadline: Date | null;
 
   @IsArray()
   @ApiProperty({ example: ['abc', 'def'] })
@@ -82,7 +82,7 @@ export class PostDto {
   @ValidateNested()
   @Type(() => RoommatePostDto)
   @ApiPropertyOptional({ type: RoommatePostDto })
-  readonly roommateDetails?: RoommatePostDto;
+  readonly roommateDetails: RoommatePostDto | null;
 
   constructor(partial: Partial<PostDto>) {
     Object.assign(this, partial);
