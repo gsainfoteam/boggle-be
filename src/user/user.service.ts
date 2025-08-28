@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse, isAxiosError } from 'axios';
 
@@ -14,7 +15,7 @@ import { UserRepository } from './user.repository';
 import { TokenDto } from './dto/token.dto';
 import { UserDto } from './dto/user.dto';
 import { IdpUserInfoDto } from './dto/idpUserInfo.dto';
-import { AxiosError } from 'axios';
+import { PostDto } from 'src/post/dto/post.dto';
 
 @Injectable()
 export class UserService {
@@ -48,9 +49,15 @@ export class UserService {
   }
 
   async login(code: string): Promise<TokenDto> {
-    const response = (
-      await firstValueFrom(
-        this.httpService.post(
+    const authHeader = `Basic ${Buffer.from(
+      `${this.clientId}:${this.clientSecret}`,
+    ).toString('base64')}`;
+
+    type TokenResponse = { access_token: string };
+
+    try {
+      const response: AxiosResponse<TokenResponse> = await firstValueFrom(
+        this.httpService.post<TokenResponse>(
           this.idpTokenUrl,
           new URLSearchParams({
             grant_type: 'authorization_code',
@@ -64,16 +71,15 @@ export class UserService {
             },
           },
         ),
-      ).catch((error) => {
-        if (error.status === 400)
-          throw new BadRequestException('Code is expired or wrong');
-        throw new InternalServerErrorException('Internal server error');
-      })
-    ).data;
+      );
 
-    const userInfo = await this.idpUserInfo(response.access_token);
+      const accessToken = response.data.access_token;
 
-    if (userInfo) {
+      const userInfo = await this.idpUserInfo(accessToken);
+      if (!userInfo) {
+        throw new UnauthorizedException();
+      }
+
       await this.userRepository.findOrCreateUser(userInfo);
 
       return { access_token: accessToken };
@@ -84,7 +90,14 @@ export class UserService {
 
   async findUser(id: string): Promise<UserDto> {
     const user = await this.userRepository.findUser(id);
-    return new UserDto({ ...user });
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      studentId: user.studentId,
+      posts: plainToInstance(PostDto, user.posts),
+      status: user.status,
+    };
   }
 
   async deleteUser(id: string): Promise<UserDto> {
@@ -93,20 +106,15 @@ export class UserService {
   }
 
   async idpUserInfo(token: string): Promise<IdpUserInfoDto> {
-    return (
-      await firstValueFrom(
-        await this.httpService.get(this.idpUserInfoUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    try {
+      const res: AxiosResponse<IdpUserInfoDto> = await firstValueFrom(
+        this.httpService.get<IdpUserInfoDto>(this.idpUserInfoUrl, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
-      ).catch((error) => {
-        if (error.status === 400)
-          throw new BadRequestException('Token is expired or wrong');
-        else if (error.status === 401)
-          throw new UnauthorizedException('Token is not authorized');
-        throw new InternalServerErrorException('Internal server error');
-      })
-    ).data;
+      );
+      return res.data;
+    } catch (error) {
+      this.handleAxiosError(error);
+    }
   }
 }
