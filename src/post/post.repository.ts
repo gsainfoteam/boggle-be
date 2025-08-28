@@ -75,6 +75,7 @@ export class PostRepository {
           maxParticipants: post.maxParticipants,
           createdAt: new Date(new Date().getTime()),
           deadline: post.deadline,
+          imageUrls: post.imageUrls,
           ...(post.type === 'ROOMMATE' &&
             post.roommateDetails && {
               roommateDetails: {
@@ -120,6 +121,7 @@ export class PostRepository {
           tags: post.tags,
           maxParticipants: post.maxParticipants,
           deadline: post.deadline,
+          imageUrls: post.imageUrls,
           ...(post.type === 'ROOMMATE' &&
             post.roommateDetails && {
               roommateDetails: {

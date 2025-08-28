@@ -73,6 +73,10 @@ export class PostDto {
   @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
   readonly deadline: Date;
 
+  @IsArray()
+  @ApiProperty({ example: ['abc', 'def'] })
+  readonly imageUrls: string[];
+
   @IsOptional()
   @ValidateNested()
   @Type(() => RoommatePostDto)

@@ -69,6 +69,7 @@ model Post {
   maxParticipants Int
   createdAt       DateTime @default(now())
   deadline        DateTime
+  imageUrls       String[]
   status          PostStatus @default(OPEN)
 }
 
@@ -111,6 +112,7 @@ model Message {
   senderId  String
   room      Room @relation("RoomMessages", fields: [roomId], references: [id])
   roomId    String
+  imageUrls String[]
   isDeleted Boolean  @default(false)
   deletedAt DateTime?
 }
