@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PostRepository } from './post.repository';
-import { PostDto } from './dto/post.dto';
-import { CreatePostDto } from './dto/createPost.dto';
-import { PostListDto, PostListQueryDto } from './dto/postList.dto';
+import { PostDto, PostListDto } from './dto/res/post.dto';
+import { CreatePostDto } from './dto/req/createPost.dto';
+import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
 
 @Injectable()

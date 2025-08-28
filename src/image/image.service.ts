@@ -31,8 +31,7 @@ export class ImageService {
       },
     });
 
-    await this.s3Client.send(command).catch((err) => {
-      console.log(err);
+    await this.s3Client.send(command).catch(() => {
       throw new InternalServerErrorException();
     });
     return key;

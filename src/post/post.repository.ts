@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreatePostDto } from './dto/createPost.dto';
-import { PostListQueryDto } from './dto/postList.dto';
+import { CreatePostDto } from './dto/req/createPost.dto';
+import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post, PostType, RoommateDetails, User } from '@prisma/client';
 
 @Injectable()

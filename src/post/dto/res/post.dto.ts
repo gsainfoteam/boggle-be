@@ -11,8 +11,17 @@ import {
 } from 'class-validator';
 import { PostType, User } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
-import { RoommatePostDto } from './roommatePost.dto';
-import { basicUserDto } from './basicUser.dto';
+import { RoommatePostDto } from '../roommatePost.dto';
+
+class basicUserDto {
+  @IsString()
+  @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
+  readonly id: string;
+
+  @IsString()
+  @ApiProperty({ example: 'John Doe' })
+  readonly name: string;
+}
 
 export class PostDto {
   @IsString()
@@ -73,4 +82,14 @@ export class PostDto {
   constructor(partial: Partial<PostDto>) {
     Object.assign(this, partial);
   }
+}
+
+export class PostListDto {
+  @IsArray()
+  @ApiProperty({ type: [PostDto] })
+  posts: PostDto[];
+
+  @IsNumber()
+  @ApiProperty({ example: 1 })
+  total: number;
 }

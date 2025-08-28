@@ -8,7 +8,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { RoommatePostDto } from './roommatePost.dto';
+import { RoommatePostDto } from '../roommatePost.dto';
 
 export class CreatePostDto {
   @IsString()
@@ -36,6 +36,10 @@ export class CreatePostDto {
   @Type(() => Date)
   @ApiProperty({ example: '2000-01-01' })
   readonly deadline: Date;
+
+  @IsArray()
+  @ApiProperty({ example: ['abc', 'def'] })
+  readonly imageUrls: string[];
 
   @IsOptional()
   @Type(() => RoommatePostDto)
