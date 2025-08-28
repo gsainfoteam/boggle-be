@@ -6,14 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Post, Prisma, User } from '@prisma/client';
-import { IdpUserInfoDto } from './dto/idpUserInfo.dto';
+import { IdpUserInfo } from './types/idpUserInfo.type';
 
 @Injectable()
 export class UserRepository {
   private readonly logger = new Logger(UserRepository.name);
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOrCreateUser(userInfo: IdpUserInfoDto): Promise<User> {
+  async findOrCreateUser(userInfo: IdpUserInfo): Promise<User> {
     return await this.prisma.user
       .upsert({
         where: { sub: userInfo.sub },
