@@ -75,6 +75,7 @@ export class PostDto {
   readonly deadline: Date | null;
 
   @IsArray()
+  @IsString({ each: true })
   @ApiProperty({ example: ['abc', 'def'] })
   readonly imageUrls: string[];
 
@@ -91,10 +92,11 @@ export class PostDto {
 
 export class PostListDto {
   @IsArray()
+  @Type(() => PostDto)
   @ApiProperty({ type: [PostDto] })
-  posts: PostDto[];
+  readonly posts: PostDto[];
 
   @IsNumber()
   @ApiProperty({ example: 1 })
-  total: number;
+  readonly total: number;
 }

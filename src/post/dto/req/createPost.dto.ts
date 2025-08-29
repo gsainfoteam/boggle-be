@@ -39,8 +39,10 @@ export class CreatePostDto {
   readonly deadline?: Date;
 
   @IsArray()
+  @IsOptional()
+  @IsString({ each: true })
   @ApiProperty({ example: ['abc', 'def'] })
-  readonly imageUrls: string[];
+  readonly imageUrls?: string[];
 
   @IsOptional()
   @Type(() => RoommatePostDto)

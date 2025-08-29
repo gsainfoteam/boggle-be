@@ -2,10 +2,12 @@ import {
   Controller,
   Post,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiInternalServerErrorResponse,
@@ -13,6 +15,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { ImageService } from './image.service';
+import { IdPGuard } from 'src/user/guard/idp.guard';
 
 @Controller('image')
 export class ImageController {
@@ -43,6 +46,8 @@ export class ImageController {
   @ApiResponse({ type: [String], status: 201 })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   @Post('upload')
+  @ApiBearerAuth()
+  @UseGuards(IdPGuard)
   @UseInterceptors(FilesInterceptor('images'))
   async uploadImage(
     @UploadedFiles() files: Express.Multer.File[],

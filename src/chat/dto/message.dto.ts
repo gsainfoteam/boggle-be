@@ -30,6 +30,7 @@ export class CreateMessageDto {
 
   @IsArray()
   @IsOptional()
+  @IsString({ each: true })
   @ApiProperty({ example: ['abc', 'def'] })
   imageUrls?: string[];
 }
