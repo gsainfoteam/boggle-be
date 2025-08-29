@@ -23,7 +23,7 @@ export class MessageService {
         `Failed to create message in room: ${createMessageDto.roomId}`,
         error.stack,
       );
-      throw error; 
+      throw error;
     }
   }
 
@@ -35,7 +35,7 @@ export class MessageService {
       const existingMessage = await this.messageRepository.getMessage(
         updateMessageDto.messageId,
       );
-      
+
       if (existingMessage.senderId !== userId) {
         throw new WsException('You can only update your own messages');
       }
@@ -46,7 +46,7 @@ export class MessageService {
         `Failed to update message ${updateMessageDto.messageId} for user ${userId}`,
         error.stack,
       );
-      throw error; 
+      throw error;
     }
   }
 
@@ -57,7 +57,7 @@ export class MessageService {
         this.logger.warn(`No messages found for room: ${roomId}`);
         return [];
       }
-      
+
       return messages;
     } catch (error) {
       this.logger.error(
@@ -72,11 +72,8 @@ export class MessageService {
     try {
       return await this.messageRepository.getMessage(uuid);
     } catch (error) {
-      this.logger.error(
-        `Failed to get message: ${uuid}`,
-        error.stack,
-      );
-      throw error; 
+      this.logger.error(`Failed to get message: ${uuid}`, error.stack);
+      throw error;
     }
   }
 
@@ -85,19 +82,22 @@ export class MessageService {
     deleteMessageDto: DeleteMessageDto,
   ): Promise<{ count: number }> {
     try {
-      const result = await this.messageRepository.deleteMany(userId, deleteMessageDto);
-      
+      const result = await this.messageRepository.deleteMany(
+        userId,
+        deleteMessageDto,
+      );
+
       this.logger.log(
         `User ${userId} deleted ${result.count} messages: ${deleteMessageDto.messageIds.join(', ')}`,
       );
-      
+
       return result;
     } catch (error) {
       this.logger.error(
         `Failed to delete messages for user ${userId}: ${deleteMessageDto.messageIds.join(', ')}`,
         error.stack,
       );
-      throw error; 
+      throw error;
     }
   }
 }

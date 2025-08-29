@@ -13,8 +13,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from './post.service';
-import { PostIdDto } from './dto/postId.dto';
-import { PostDto } from './dto/post.dto';
+import { PostIdDto } from './dto/req/postId.dto';
+import { PostDto, PostListDto } from './dto/res/post.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -26,8 +26,8 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CreatePostDto } from './dto/createPost.dto';
-import { PostListDto, PostListQueryDto } from './dto/postList.dto';
+import { CreatePostDto } from './dto/req/createPost.dto';
+import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { IdPGuard } from 'src/user/guard/idp.guard';
 
 @Controller('post')

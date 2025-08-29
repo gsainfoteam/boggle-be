@@ -5,13 +5,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { TokenDto } from './dto/token.dto';
+import { TokenDto } from './dto/res/token.dto';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { UserRepository } from './user.repository';
-import { UserDto } from './dto/user.dto';
-import { IdpUserInfoDto } from './dto/idpUserInfo.dto';
+import { UserDto } from './dto/res/user.dto';
 import { AxiosError } from 'axios';
+import { IdpUserInfo } from './types/idpUserInfo.type';
 
 @Injectable()
 export class UserService {
@@ -83,10 +83,10 @@ export class UserService {
     return this.findUser(id);
   }
 
-  async idpUserInfo(token: string): Promise<IdpUserInfoDto> {
+  async idpUserInfo(token: string): Promise<IdpUserInfo> {
     return (
       await firstValueFrom(
-        this.httpService.get<IdpUserInfoDto>(this.idpUserInfoUrl, {
+        this.httpService.get<IdpUserInfo>(this.idpUserInfoUrl, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

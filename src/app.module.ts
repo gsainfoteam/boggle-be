@@ -4,6 +4,7 @@ import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { ChatModule } from './chat/chat.module';
 import { HttpModule } from '@nestjs/axios';
+import { ImageModule } from './image/image.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { HttpModule } from '@nestjs/axios';
     UserModule,
     PostModule,
     ChatModule,
+    ImageModule,
   ],
 })
 export class AppModule {}

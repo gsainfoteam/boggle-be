@@ -11,8 +11,17 @@ import {
 } from 'class-validator';
 import { PostType, User } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
-import { RoommatePostDto } from './roommatePost.dto';
-import { basicUserDto } from './basicUser.dto';
+import { RoommatePostDto } from '../roommatePost.dto';
+
+class basicUserDto {
+  @IsString()
+  @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
+  readonly id: string;
+
+  @IsString()
+  @ApiProperty({ example: 'John Doe' })
+  readonly name: string;
+}
 
 export class PostDto {
   @IsString()
@@ -22,7 +31,7 @@ export class PostDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ example: 'this is title' })
-  readonly title?: string | null;
+  readonly title: string | null;
 
   @IsString()
   @ApiProperty({ example: 'this is content' })
@@ -63,15 +72,31 @@ export class PostDto {
   @IsOptional()
   @IsDate()
   @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
-  readonly deadline?: Date;
+  readonly deadline: Date | null;
+
+  @IsArray()
+  @IsString({ each: true })
+  @ApiProperty({ example: ['abc', 'def'] })
+  readonly imageUrls: string[];
 
   @IsOptional()
   @ValidateNested()
   @Type(() => RoommatePostDto)
   @ApiPropertyOptional({ type: RoommatePostDto })
-  readonly roommateDetails?: RoommatePostDto;
+  readonly roommateDetails: RoommatePostDto | null;
 
   constructor(partial: Partial<PostDto>) {
     Object.assign(this, partial);
   }
+}
+
+export class PostListDto {
+  @IsArray()
+  @Type(() => PostDto)
+  @ApiProperty({ type: [PostDto] })
+  readonly posts: PostDto[];
+
+  @IsNumber()
+  @ApiProperty({ example: 1 })
+  readonly total: number;
 }
