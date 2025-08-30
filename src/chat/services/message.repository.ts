@@ -22,6 +22,7 @@ export class MessageRepository {
     roomId,
     content,
     senderId,
+    imageUrls,
   }: CreateMessageDto): Promise<Message> {
     try {
       await this.prisma.room.findFirstOrThrow({

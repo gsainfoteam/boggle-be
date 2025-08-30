@@ -7,18 +7,28 @@ export class SearchDto {
   @IsString()
   q!: string;
 
+  @ApiProperty({
+    description: 'Limit value, 20 by default',
+    example: '100',
+    required: false,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
-  limit: number = 20;
+  limit?: number;
 
+  @ApiProperty({
+    description: 'Offset value, 0 by default',
+    example: '10',
+    required: false,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  offset: number = 0;
+  offset?: number;
 }
 
 export class SearchItemDto {

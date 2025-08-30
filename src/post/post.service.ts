@@ -30,10 +30,10 @@ export class PostService {
   }
 
   async search(dto: SearchDto) {
-    return this.postRepository.webSearch(dto.q, {
-      limit: dto.limit,
-      offset: dto.offset,
-    });
+    const q = dto.q.trim();
+    const limit = dto.limit ?? 20;
+    const offset = dto.offset ?? 0;
+    return this.postRepository.webSearch(q, { limit, offset });
   }
 
   async updatePost(

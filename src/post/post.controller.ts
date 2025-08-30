@@ -51,6 +51,19 @@ export class PostController {
     return await this.postService.getPostList(query);
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Full-text search' })
+  @ApiOkResponse({ description: 'Search results', type: SearchResponseDto })
+  async search(@Query() searchDto: SearchDto): Promise<SearchResponseDto> {
+    const trimmed = (searchDto.q ?? '').trim();
+    const limit = searchDto.limit ?? 20;
+    const offset = searchDto.offset ?? 0;
+
+    if (!trimmed) return { items: [], offset, limit };
+    const items = await this.postService.search({ q: trimmed, limit, offset });
+    return { items, offset, limit };
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get post',
@@ -87,19 +100,6 @@ export class PostController {
     @Request() req: Request & { user: string },
   ): Promise<PostDto> {
     return await this.postService.createPost(postDto, req.user);
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'Full-text search with offset pagination' })
-  @ApiOkResponse({ description: 'Search results', type: SearchResponseDto })
-  @ApiNotFoundResponse({ description: 'Not found' })
-  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
-  async search(@Query() searchDto: SearchDto): Promise<SearchResponseDto> {
-    const { q, limit, offset } = searchDto;
-    const trimmed = (q ?? '').trim();
-    if (!trimmed) return { items: [], offset, limit };
-    const items = await this.postService.search({ ...searchDto, q: trimmed });
-    return { items, offset, limit };
   }
 
   @Put(':id')

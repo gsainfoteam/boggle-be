@@ -8,14 +8,20 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post, PostType, Prisma, RoommateDetails, User } from '@prisma/client';
+import { z } from 'zod';
 
-type SearchRow = {
-  id: string;
-  title: string | null;
-  rank: number;
-  createdAt: Date;
-  snippet?: string | null;
-};
+const searchRowSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().nullable(),
+  rank: z.number(),
+  createdAt: z.preprocess((v) => {
+    if (v instanceof Date) return v;
+    const d = new Date(String(v));
+    return Number.isNaN(d.getTime()) ? v : d;
+  }, z.date()),
+});
+
+type SearchRow = z.infer<typeof searchRowSchema>;
 
 const DOC = Prisma.sql`
 (
@@ -292,18 +298,20 @@ export class PostRepository {
     q: string,
     { limit = 20, offset = 0 }: { limit?: number; offset?: number } = {},
   ): Promise<SearchRow[]> {
-    const L = Math.min(Math.max(limit, 1), 100);
-    const O = Math.max(offset, 0);
+    const l = limit ?? 20;
+    const o = offset ?? 0;
+    const L = Math.min(Math.max(l, 1), 100);
+    const O = Math.max(o, 0);
 
-    return await this.prisma.$queryRaw<SearchRow[]>(Prisma.sql`
+    const rows = await this.prisma.$queryRaw<unknown[]>(Prisma.sql`
               WITH query AS (
                   SELECT websearch_to_tsquery('english', ${q}) AS q
               )
               SELECT
-                  p.id,
-                  p.title,
-                  ts_rank_cd(${DOC}, query.q) AS rank,
-                  p."createdAt"
+                  p.id::uuid AS id,
+                  p.title::text AS title,
+                  ts_rank_cd(${DOC}, query.q)::float8 AS rank,
+                  p."createdAt"::timestamptz AS "createdAt"
               FROM
                   "Post" p,
                   query
@@ -315,5 +323,10 @@ export class PostRepository {
               OFFSET ${O}
               LIMIT ${L};
           `);
+    const parsed = searchRowSchema.array().safeParse(rows);
+    if (!parsed.success) {
+      throw new InternalServerErrorException('Invalid search row shape');
+    }
+    return parsed.data;
   }
 }
