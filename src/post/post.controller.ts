@@ -29,7 +29,8 @@ import {
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { IdPGuard } from 'src/user/guard/idp.guard';
-import { SearchDto, SearchResponseDto } from './dto/req/search.dto';
+import { SearchDto } from './dto/req/search.dto';
+import { SearchResponseDto } from './dto/res/searchResponse.dto';
 
 @Controller('post')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -52,16 +53,16 @@ export class PostController {
   }
 
   @Get('search')
-  @ApiOperation({ summary: 'Full-text search' })
+  @ApiOperation({ summary: 'Search by text' })
   @ApiOkResponse({ description: 'Search results', type: SearchResponseDto })
   async search(@Query() searchDto: SearchDto): Promise<SearchResponseDto> {
     const trimmed = (searchDto.q ?? '').trim();
     const limit = searchDto.limit ?? 20;
     const offset = searchDto.offset ?? 0;
 
-    if (!trimmed) return { items: [], offset, limit };
-    const items = await this.postService.search({ q: trimmed, limit, offset });
-    return { items, offset, limit };
+    if (!trimmed) return { posts: [], offset, limit };
+    const posts = await this.postService.search({ q: trimmed, limit, offset });
+    return { posts, offset, limit };
   }
 
   @Get(':id')

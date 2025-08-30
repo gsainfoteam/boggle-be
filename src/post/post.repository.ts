@@ -7,7 +7,14 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
-import { Post, PostType, Prisma, RoommateDetails, User } from '@prisma/client';
+import {
+  Post,
+  PostStatus,
+  PostType,
+  Prisma,
+  RoommateDetails,
+  User,
+} from '@prisma/client';
 import { z } from 'zod';
 
 const searchRowSchema = z.object({
@@ -20,8 +27,6 @@ const searchRowSchema = z.object({
     return Number.isNaN(d.getTime()) ? v : d;
   }, z.date()),
 });
-
-type SearchRow = z.infer<typeof searchRowSchema>;
 
 const DOC = Prisma.sql`
 (
@@ -297,7 +302,7 @@ export class PostRepository {
   async webSearch(
     q: string,
     { limit = 20, offset = 0 }: { limit?: number; offset?: number } = {},
-  ): Promise<SearchRow[]> {
+  ) {
     const l = limit ?? 20;
     const o = offset ?? 0;
     const L = Math.min(Math.max(l, 1), 100);
@@ -311,7 +316,7 @@ export class PostRepository {
                   p.id::uuid AS id,
                   p.title::text AS title,
                   ts_rank_cd(${DOC}, query.q)::float8 AS rank,
-                  p."createdAt"::timestamptz AS "createdAt"
+                  p."createdAt"::timestamptz AS "createdAt" 
               FROM
                   "Post" p,
                   query
@@ -327,6 +332,66 @@ export class PostRepository {
     if (!parsed.success) {
       throw new InternalServerErrorException('Invalid search row shape');
     }
-    return parsed.data;
+
+    const orderedRows = parsed.data;
+    if (orderedRows.length === 0) {
+      return [];
+    }
+    const ids = orderedRows.map((post) => post.id);
+
+    const posts = await this.prisma.post.findMany({
+      where: { id: { in: ids } },
+      include: {
+        author: { select: { id: true, name: true } },
+        participants: { select: { id: true, name: true } },
+        roommateDetails: true,
+      },
+    });
+
+    const byId = new Map(posts.map((p) => [p.id, p]));
+    const items = orderedRows
+      .map((h) => {
+        const p = byId.get(h.id);
+        if (!p) return undefined;
+        return {
+          id: p.id,
+          title: p.title,
+          content: p.content,
+          type: p.type,
+          tags: p.tags,
+          author: { id: p.author.id, name: p.author.name },
+          participants: p.participants.map((participant) => ({
+            id: participant.id,
+            name: participant.name,
+          })),
+          maxParticipants: p.maxParticipants,
+          createdAt: p.createdAt,
+          deadline: p.deadline,
+          imageUrls: (p as any).imageUrls ?? [],
+          roommateDetails: p.roommateDetails,
+          authorId: p.authorId,
+          status: p.status,
+          rank: h.rank,
+        };
+      })
+      .filter(Boolean) as unknown as Array<{
+      id: string;
+      title: string | null;
+      content: string;
+      type: PostType;
+      tags: string[];
+      author: User;
+      participants: User[];
+      maxParticipants: number;
+      createdAt: Date;
+      deadline: Date | null;
+      imageUrls: string[];
+      roommateDetails: RoommateDetails | null;
+      authorId: string;
+      status: PostStatus;
+      rank: number;
+    }>;
+
+    return items;
   }
 }

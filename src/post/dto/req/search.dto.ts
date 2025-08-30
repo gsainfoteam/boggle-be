@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PostStatus, PostType, RoommateDetails, User } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
@@ -31,27 +32,20 @@ export class SearchDto {
   offset?: number;
 }
 
-export class SearchItemDto {
-  @ApiProperty()
+export class SearchPostDto {
   id!: string;
-
-  @ApiProperty({ nullable: true })
   title!: string | null;
-
-  @ApiProperty({ type: Number, format: 'float', example: 0.7321 })
-  rank!: number;
-
-  @ApiProperty({ type: String, format: 'date-time' })
+  content!: string;
+  type!: PostType;
+  tags!: string[];
+  author!: User;
+  participants!: User[];
+  maxParticipants!: number;
   createdAt!: Date;
-}
-
-export class SearchResponseDto {
-  @ApiProperty({ type: [SearchItemDto] })
-  items!: SearchItemDto[];
-
-  @ApiProperty()
-  offset!: number;
-
-  @ApiProperty()
-  limit!: number;
+  deadline!: Date | null;
+  imageUrls!: string[];
+  roommateDetails!: RoommateDetails | null;
+  authorId!: string;
+  status!: PostStatus;
+  rank!: number;
 }
