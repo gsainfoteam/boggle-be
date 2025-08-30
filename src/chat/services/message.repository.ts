@@ -18,7 +18,11 @@ export class MessageRepository {
     deletedAt: null,
   };
 
-  async createMessage({ roomId, content, senderId }: CreateMessageDto): Promise<Message> {
+  async createMessage({
+    roomId,
+    content,
+    senderId,
+  }: CreateMessageDto): Promise<Message> {
     try {
       await this.prisma.room.findFirstOrThrow({
         where: {

@@ -29,6 +29,7 @@ import {
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { IdPGuard } from 'src/user/guard/idp.guard';
+import { SearchDto, SearchResponseDto } from './dto/req/search.dto';
 
 @Controller('post')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -86,6 +87,19 @@ export class PostController {
     @Request() req: Request & { user: string },
   ): Promise<PostDto> {
     return await this.postService.createPost(postDto, req.user);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Full-text search with offset pagination' })
+  @ApiOkResponse({ description: 'Search results', type: SearchResponseDto })
+  @ApiNotFoundResponse({ description: 'Not found' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  async search(@Query() searchDto: SearchDto): Promise<SearchResponseDto> {
+    const { q, limit, offset } = searchDto;
+    const trimmed = (q ?? '').trim();
+    if (!trimmed) return { items: [], offset, limit };
+    const items = await this.postService.search({ ...searchDto, q: trimmed });
+    return { items, offset, limit };
   }
 
   @Put(':id')

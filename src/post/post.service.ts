@@ -4,6 +4,7 @@ import { PostDto, PostListDto } from './dto/res/post.dto';
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
+import { SearchDto } from './dto/req/search.dto';
 
 @Injectable()
 export class PostService {
@@ -26,6 +27,13 @@ export class PostService {
     const post = await this.postRepository.createPost(postDto, user);
 
     return this.getPost(post.id);
+  }
+
+  async search(dto: SearchDto) {
+    return this.postRepository.webSearch(dto.q, {
+      limit: dto.limit,
+      offset: dto.offset,
+    });
   }
 
   async updatePost(

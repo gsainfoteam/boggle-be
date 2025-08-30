@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { ChatModule } from './chat/chat.module';
-import { HttpModule } from '@nestjs/axios';
 import { ImageModule } from './image/image.module';
 
 @Module({
@@ -12,6 +11,7 @@ import { ImageModule } from './image/image.module';
     UserModule,
     PostModule,
     ChatModule,
+    ImageModule,
   ],
 })
 export class AppModule {}
