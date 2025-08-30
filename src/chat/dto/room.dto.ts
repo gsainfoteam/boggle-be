@@ -1,7 +1,7 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
-import { RoomTypeEnum } from "../common/enums/room-type.enum";
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { RoomTypeEnum } from '../common/enums/room-type.enum';
 
 export class CreateRoomDto {
   @ApiProperty({ required: true })
@@ -21,10 +21,12 @@ export class CreateRoomDto {
 
   @ApiProperty({ required: false, type: String, isArray: true })
   @IsNotEmpty()
-  @IsUUID(undefined, { each: true, message: 'Each participant must have a valid UUID' })
+  @IsUUID(undefined, {
+    each: true,
+    message: 'Each participant must have a valid UUID',
+  })
   participantsId: string[];
 }
-
 
 export class AssignUsersDto {
   @ApiProperty({ required: true })
@@ -36,10 +38,12 @@ export class AssignUsersDto {
   @ApiProperty({ required: true, type: String, isArray: true })
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
-  @IsUUID(undefined, { each: true, message: 'Each participant must have a valid UUID' })
+  @IsUUID(undefined, {
+    each: true,
+    message: 'Each participant must have a valid UUID',
+  })
   participantsId: string[];
 }
-
 
 export class DeleteUsersDto {
   @ApiProperty({ required: true })
@@ -51,10 +55,12 @@ export class DeleteUsersDto {
   @ApiProperty({ required: true, type: String, isArray: true })
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
-  @IsUUID(undefined, { each: true, message: 'Each participant must have a valid UUID' })
+  @IsUUID(undefined, {
+    each: true,
+    message: 'Each participant must have a valid UUID',
+  })
   participantsId: string[];
 }
-
 
 export class DeleteRoomDto {
   @ApiProperty({ required: false })
@@ -86,7 +92,7 @@ export class UpdateRoomDto {
 }
 
 export class BaseRoomDto {
-  @ApiProperty({required: true})
+  @ApiProperty({ required: true })
   @IsString()
   @IsNotEmpty()
   @IsUUID()

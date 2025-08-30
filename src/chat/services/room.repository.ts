@@ -12,7 +12,7 @@ import { Room } from '@prisma/client';
 
 @Injectable()
 export class RoomRepository {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   private readonly baseWhereDeleted = {
     isDeleted: false,
@@ -46,10 +46,10 @@ export class RoomRepository {
       return await this.prisma.room.findUniqueOrThrow({
         where: {
           id: roomId,
-          ...this.baseWhereDeleted
+          ...this.baseWhereDeleted,
         },
         include: {
-          members: true
+          members: true,
         },
       });
     } catch (error) {
@@ -72,7 +72,7 @@ export class RoomRepository {
           updatedAt: new Date(),
         },
         include: {
-          members: true
+          members: true,
         },
       });
     } catch (error) {
@@ -113,7 +113,7 @@ export class RoomRepository {
         await tx.message.updateMany({
           where: {
             roomId: roomId,
-            isDeleted: false, 
+            isDeleted: false,
           },
           data: {
             isDeleted: true,
@@ -123,7 +123,7 @@ export class RoomRepository {
 
         const deletedRoom = await tx.room.update({
           where: {
-            id: roomId, 
+            id: roomId,
             ...this.baseWhereDeleted,
           },
           data: {
@@ -132,7 +132,7 @@ export class RoomRepository {
           },
           include: {
             members: true,
-          }
+          },
         });
 
         return deletedRoom;
@@ -148,13 +148,12 @@ export class RoomRepository {
     }
   }
 
-
   async restore(roomId: string) {
     try {
       return await this.prisma.$transaction(async (tx) => {
         const restoredRoom = await tx.room.update({
           where: {
-            id: roomId, 
+            id: roomId,
             isDeleted: true,
           },
           data: {
@@ -163,7 +162,7 @@ export class RoomRepository {
           },
           include: {
             members: true,
-          }
+          },
         });
 
         await tx.message.updateMany({
@@ -200,7 +199,7 @@ export class RoomRepository {
           },
         },
         include: {
-          members:true
+          members: true,
         },
       });
     } catch (error) {
@@ -250,7 +249,7 @@ export class RoomRepository {
           },
         },
         include: {
-          members:true
+          members: true,
         },
         orderBy: {
           updatedAt: 'desc',
@@ -276,7 +275,7 @@ export class RoomRepository {
           },
         },
         include: {
-          members: true
+          members: true,
         },
       });
     } catch (error) {
@@ -300,7 +299,7 @@ export class RoomRepository {
           },
         },
         include: {
-          members: true
+          members: true,
         },
       });
     } catch (error) {

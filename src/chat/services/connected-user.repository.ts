@@ -7,10 +7,12 @@ import { UserPayload } from 'src/types/user-payload.type';
 
 @Injectable()
 export class ConnectedUserRepository {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async create(userPayload: UserPayload, socketId: string): Promise<ConnectedUser> {
-
+  async create(
+    userPayload: UserPayload,
+    socketId: string,
+  ): Promise<ConnectedUser> {
     try {
       return await this.prisma.connectedUser.create({
         data: {
@@ -33,7 +35,10 @@ export class ConnectedUserRepository {
         where: { socketId },
       });
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new WsException('Connected user not found');
       }
       throw new WsException('Failed to delete connected user');
