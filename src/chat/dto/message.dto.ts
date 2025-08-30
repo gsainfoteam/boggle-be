@@ -27,6 +27,12 @@ export class CreateMessageDto {
   @IsNotEmpty()
   @IsUUID()
   senderId: string;
+
+  @IsArray()
+  @IsOptional()
+  @IsString({ each: true })
+  @ApiProperty({ example: ['abc', 'def'] })
+  imageUrls?: string[];
 }
 
 export class DeleteMessageDto {

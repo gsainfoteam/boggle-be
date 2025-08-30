@@ -20,10 +20,10 @@ import {
   ApiParam,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UserIdDto } from './dto/userId.dto';
-import { LoginDto } from './dto/login.dto';
-import { TokenDto } from './dto/token.dto';
-import { UserDto } from './dto/user.dto';
+import { UserIdDto } from './dto/req/userId.dto';
+import { LoginDto } from './dto/req/login.dto';
+import { TokenDto } from './dto/res/token.dto';
+import { UserDto } from './dto/res/user.dto';
 import { IdPGuard } from './guard/idp.guard';
 
 @Controller('user')

@@ -1,18 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsString } from 'class-validator';
-import { PostDto } from './post.dto';
+import { IsNumber, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PostType } from '@prisma/client';
-
-export class PostListDto {
-  @IsArray()
-  @ApiProperty({ type: [PostDto] })
-  posts: PostDto[];
-
-  @IsNumber()
-  @ApiProperty({ example: 1 })
-  total: number;
-}
 
 export class PostListQueryDto {
   @IsString()

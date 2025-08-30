@@ -3,7 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { ChatModule } from './chat/chat.module';
-import { SearchModule } from './search/search.module';
+import { HttpModule } from '@nestjs/axios';
+import { ImageModule } from './image/image.module';
 
 @Module({
   imports: [
@@ -11,7 +12,6 @@ import { SearchModule } from './search/search.module';
     UserModule,
     PostModule,
     ChatModule,
-    SearchModule,
   ],
 })
 export class AppModule {}

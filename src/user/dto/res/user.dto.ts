@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Post, UserStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsArray, IsString } from 'class-validator';
-import { PostDto } from 'src/post/dto/post.dto';
+import { PostDto } from 'src/post/dto/res/post.dto';
 
 export class UserDto {
   @IsString()
