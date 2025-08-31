@@ -367,7 +367,7 @@ export class PostRepository {
           maxParticipants: p.maxParticipants,
           createdAt: p.createdAt,
           deadline: p.deadline,
-          imageUrls: (p as any).imageUrls ?? [],
+          imageUrls: p.imageUrls ?? [],
           roommateDetails: p.roommateDetails,
           authorId: p.authorId,
           status: p.status,
