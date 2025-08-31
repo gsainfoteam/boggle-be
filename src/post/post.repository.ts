@@ -359,11 +359,14 @@ export class PostRepository {
           content: p.content,
           type: p.type,
           tags: p.tags,
-          author: { id: p.author.id, name: p.author.name },
+          author: { id: p.author.id, name: p.author.name } as Pick<
+            User,
+            'id' | 'name'
+          >,
           participants: p.participants.map((participant) => ({
             id: participant.id,
             name: participant.name,
-          })),
+          })) as Array<Pick<User, 'id' | 'name'>>,
           maxParticipants: p.maxParticipants,
           createdAt: p.createdAt,
           deadline: p.deadline,
@@ -374,14 +377,14 @@ export class PostRepository {
           rank: h.rank,
         };
       })
-      .filter(Boolean) as unknown as Array<{
+      .filter(Boolean) as Array<{
       id: string;
       title: string | null;
       content: string;
       type: PostType;
       tags: string[];
-      author: User;
-      participants: User[];
+      author: Pick<User, 'id' | 'name'>;
+      participants: Array<Pick<User, 'id' | 'name'>>;
       maxParticipants: number;
       createdAt: Date;
       deadline: Date | null;

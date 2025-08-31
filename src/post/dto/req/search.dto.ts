@@ -1,7 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PostStatus, PostType, RoommateDetails, User } from '@prisma/client';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { PostStatus, PostType, User } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
+import { RoommatePostDto } from '../roommatePost.dto';
+
+class publicUserDto {
+  @IsString()
+  @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
+  readonly id: string;
+
+  @IsString()
+  @ApiProperty({ example: 'John Doe' })
+  readonly name: string;
+}
 
 export class SearchDto {
   @ApiProperty({ description: 'Query string', example: 'roommate' })
@@ -37,6 +56,7 @@ export class SearchPostDto {
     description: 'The unique identifier for the post.',
     example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
   })
+  @IsString()
   id!: string;
 
   @ApiProperty({
@@ -44,6 +64,7 @@ export class SearchPostDto {
     example: 'Looking for a study group for Advanced Algorithms!',
     nullable: true,
   })
+  @IsString()
   title!: string | null;
 
   @ApiProperty({
@@ -51,6 +72,7 @@ export class SearchPostDto {
     example:
       'We meet twice a week to go over lectures and solve problems. Looking for two more members.',
   })
+  @IsString()
   content!: string;
 
   @ApiProperty({
@@ -71,14 +93,18 @@ export class SearchPostDto {
     description:
       'The user who authored the post. Exposes the full Prisma User model.',
   })
-  author!: User;
+  @IsObject()
+  @Transform(({ value }: { value: User }) => {
+    return { id: value.id, name: value.name };
+  })
+  author!: publicUserDto | User;
 
   @ApiProperty({
     description:
       'A list of users participating in the post. Exposes the full Prisma User model.',
     type: [Object], // Using a generic object type for the array of Prisma types
   })
-  participants!: User[];
+  participants!: { id: string; name: string }[];
 
   @ApiProperty({
     description:
@@ -112,7 +138,13 @@ export class SearchPostDto {
       'Specific details for posts of type ROOMMATE. Exposes the full Prisma RoommateDetails model.',
     nullable: true,
   })
-  roommateDetails!: RoommateDetails | null;
+  @IsArray()
+  @Transform(({ value }: { value: User[] }) =>
+    value.map((user) => {
+      return { id: user.id, name: user.name };
+    }),
+  )
+  roommateDetails!: RoommatePostDto | null;
 
   @ApiProperty({
     description: "The ID of the post's author.",
