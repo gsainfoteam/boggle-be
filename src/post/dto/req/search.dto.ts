@@ -9,6 +9,7 @@ import {
   IsString,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { RoommatePostDto } from '../roommatePost.dto';
 
@@ -90,21 +91,30 @@ export class SearchPostDto {
   tags!: string[];
 
   @ApiProperty({
-    description:
-      'The user who authored the post. Exposes the full Prisma User model.',
+    description: 'The user who authored the post.',
   })
   @IsObject()
   @Transform(({ value }: { value: User }) => {
     return { id: value.id, name: value.name };
   })
-  author!: publicUserDto | User;
+  author!: publicUserDto;
 
   @ApiProperty({
-    description:
-      'A list of users participating in the post. Exposes the full Prisma User model.',
-    type: [Object], // Using a generic object type for the array of Prisma types
+    description: 'A list of participants in the post.',
+    type: [publicUserDto], // Using a generic object type for the array of Prisma types
   })
-  participants!: { id: string; name: string }[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => publicUserDto)
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? (value as { id: string; name: string }[]).map(({ id, name }) => ({
+          id,
+          name,
+        }))
+      : [],
+  )
+  participants!: publicUserDto[];
 
   @ApiProperty({
     description:
@@ -135,7 +145,7 @@ export class SearchPostDto {
 
   @ApiProperty({
     description:
-      'Specific details for posts of type ROOMMATE. Exposes the full Prisma RoommateDetails model.',
+      'Specific details for posts of type ROOMMATE (RoommatePostDto).',
     nullable: true,
   })
   @IsArray()
