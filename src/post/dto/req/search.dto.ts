@@ -101,7 +101,7 @@ export class SearchPostDto {
 
   @ApiProperty({
     description: 'A list of participants in the post.',
-    type: [publicUserDto], // Using a generic object type for the array of Prisma types
+    type: [publicUserDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
