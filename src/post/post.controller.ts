@@ -56,13 +56,7 @@ export class PostController {
   @ApiOperation({ summary: 'Search by text' })
   @ApiOkResponse({ description: 'Search results', type: SearchResponseDto })
   async search(@Query() searchDto: SearchDto): Promise<SearchResponseDto> {
-    const trimmed = (searchDto.q ?? '').trim();
-    const limit = searchDto.limit ?? 20;
-    const offset = searchDto.offset ?? 0;
-
-    if (!trimmed) return { posts: [], offset, limit };
-    const posts = await this.postService.search({ q: trimmed, limit, offset });
-    return { posts, offset, limit };
+    return await this.postService.search(searchDto);
   }
 
   @Get(':id')

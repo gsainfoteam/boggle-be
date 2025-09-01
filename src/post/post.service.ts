@@ -5,6 +5,7 @@ import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
 import { SearchDto } from './dto/req/search.dto';
+import { SearchResponseDto } from './dto/res/searchResponse.dto';
 
 @Injectable()
 export class PostService {
@@ -29,11 +30,16 @@ export class PostService {
     return this.getPost(post.id);
   }
 
-  async search(dto: SearchDto) {
-    const q = dto.q.trim();
-    const limit = dto.limit ?? 20;
-    const offset = dto.offset ?? 0;
-    return this.postRepository.webSearch(q, { limit, offset });
+  async search(dto: SearchDto): Promise<SearchResponseDto> {
+    const trimmed = (dto.query ?? '').trim();
+    const Limit = dto.limit ?? 20;
+    const Offset = dto.offset ?? 0;
+    if (!trimmed) return { posts: [], total: 0 };
+    const { posts, total } = await this.postRepository.webSearch(trimmed, {
+      limit: Limit,
+      offset: Offset,
+    });
+    return { posts, total };
   }
 
   async updatePost(

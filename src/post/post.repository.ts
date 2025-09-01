@@ -7,31 +7,22 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
-import {
-  Post,
-  PostStatus,
-  PostType,
-  Prisma,
-  RoommateDetails,
-  User,
-} from '@prisma/client';
+import { Post, PostType, Prisma, RoommateDetails, User } from '@prisma/client';
 import { z } from 'zod';
+import { SearchPostDto, SearchResponseDto } from './dto/res/searchResponse.dto';
 
 const searchRowSchema = z.object({
   id: z.string().uuid(),
-  title: z.string().nullable(),
   rank: z.number(),
-  createdAt: z.preprocess((v) => {
-    if (v instanceof Date) return v;
-    const d = new Date(String(v));
-    return Number.isNaN(d.getTime()) ? v : d;
-  }, z.date()),
+  createdAt: z.coerce.date(),
+  total: z.coerce.number(),
 });
 
+//For a custom immutable_array_to_string function, refer to prisma\migrations\20250828014743_add_post_fts_gin
 const DOC = Prisma.sql`
 (
     setweight(to_tsvector('english', COALESCE(p.title, '')), 'A') ||
-    setweight(to_tsvector('english', immutable_array_to_string(p.tags, ' ')), 'B') ||
+    setweight(to_tsvector('english', immutable_array_to_string(p.tags, ' ')), 'B') ||   
     setweight(to_tsvector('english', COALESCE(p.content, '')), 'C')
 )`;
 
@@ -300,9 +291,9 @@ export class PostRepository {
   }
 
   async webSearch(
-    q: string,
+    query: string,
     { limit = 20, offset = 0 }: { limit?: number; offset?: number } = {},
-  ) {
+  ): Promise<SearchResponseDto> {
     const l = limit ?? 20;
     const o = offset ?? 0;
     const L = Math.min(Math.max(l, 1), 100);
@@ -310,13 +301,13 @@ export class PostRepository {
 
     const rows = await this.prisma.$queryRaw<unknown[]>(Prisma.sql`
               WITH query AS (
-                  SELECT websearch_to_tsquery('english', ${q}) AS q
+                  SELECT websearch_to_tsquery('english', ${query}) AS q
               )
               SELECT
                   p.id::uuid AS id,
-                  p.title::text AS title,
                   ts_rank_cd(${DOC}, query.q)::float8 AS rank,
-                  p."createdAt"::timestamptz AS "createdAt" 
+                  p."createdAt"::timestamptz AS "createdAt",
+                  COUNT(*) OVER ()::bigint AS total  
               FROM
                   "Post" p,
                   query
@@ -335,10 +326,10 @@ export class PostRepository {
 
     const orderedRows = parsed.data;
     if (orderedRows.length === 0) {
-      return [];
+      return { posts: [], total: 0 };
     }
+    const total = orderedRows[0].total;
     const ids = orderedRows.map((post) => post.id);
-
     const posts = await this.prisma.post.findMany({
       where: { id: { in: ids } },
       include: {
@@ -377,24 +368,8 @@ export class PostRepository {
           rank: h.rank,
         };
       })
-      .filter(Boolean) as Array<{
-      id: string;
-      title: string | null;
-      content: string;
-      type: PostType;
-      tags: string[];
-      author: Pick<User, 'id' | 'name'>;
-      participants: Array<Pick<User, 'id' | 'name'>>;
-      maxParticipants: number;
-      createdAt: Date;
-      deadline: Date | null;
-      imageUrls: string[];
-      roommateDetails: RoommateDetails | null;
-      authorId: string;
-      status: PostStatus;
-      rank: number;
-    }>;
+      .filter(Boolean) as SearchPostDto[];
 
-    return items;
+    return { posts: items, total };
   }
 }
