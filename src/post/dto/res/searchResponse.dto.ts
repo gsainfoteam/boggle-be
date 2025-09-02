@@ -9,8 +9,9 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { PostStatus, PostType, User } from '@prisma/client';
 import { RoommatePostDto } from '../roommatePost.dto';
-
-class publicUserDto {
+import { z } from 'zod';
+import { PostDto } from './post.dto';
+export class publicUserDto {
   @IsString()
   @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
   readonly id: string;
@@ -20,10 +21,44 @@ class publicUserDto {
   readonly name: string;
 }
 
-export class FtsRow {
-  id: string;
-  rank: number;
-  total: number;
+export const SearchRowSchema = z.object({
+  id: z.string().uuid(),
+  rank: z.number(),
+  createdAt: z.coerce.date(),
+  total: z.coerce.number(),
+});
+
+type SearchRow = z.infer<typeof SearchRowSchema>;
+
+export class SearchRepoResponseDto {
+  @ApiProperty({
+    description: 'Parsed, Zod-validated FTS rows in relevance order.',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        rank: { type: 'number' },
+        createdAt: {
+          type: 'string',
+          format: 'date-time',
+        },
+        total: {
+          type: 'number',
+        },
+      },
+      required: ['id', 'rank', 'createdAt', 'total'],
+    },
+  })
+  @IsArray()
+  rows!: ReadonlyArray<SearchRow>;
+
+  @ApiProperty({
+    description: 'Hydrated posts aligned 1:1 and in the same order as `rows`.',
+  })
+  @IsArray()
+  @Type(() => PostDto)
+  posts!: ReadonlyArray<SearchPostDto>;
 }
 
 export class SearchPostDto {
@@ -122,7 +157,7 @@ export class SearchPostDto {
       'Specific details for posts of type ROOMMATE (RoommatePostDto).',
     nullable: true,
   })
-  @IsArray()
+  @ValidateNested()
   @Transform(({ value }: { value: User[] }) =>
     value.map((user) => {
       return { id: user.id, name: user.name };
@@ -131,24 +166,12 @@ export class SearchPostDto {
   roommateDetails!: RoommatePostDto | null;
 
   @ApiProperty({
-    description: "The ID of the post's author.",
-    example: 'c1b2a3d4-e5f6-7890-1234-567890abcdef',
-  })
-  authorId!: string;
-
-  @ApiProperty({
     description:
       'The current status of the post (e.g., open for participants or closed).',
     enum: PostStatus,
     example: PostStatus.OPEN,
   })
   status!: PostStatus;
-
-  @ApiProperty({
-    description: 'The relevance score of the search result, from 0 to 1.',
-    example: 0.8734,
-  })
-  rank!: number;
 }
 
 export class SearchResponseDto {

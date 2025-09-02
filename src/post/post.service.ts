@@ -5,7 +5,11 @@ import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
 import { SearchDto } from './dto/req/search.dto';
-import { SearchResponseDto } from './dto/res/searchResponse.dto';
+import {
+  publicUserDto,
+  SearchPostDto,
+  SearchResponseDto,
+} from './dto/res/searchResponse.dto';
 
 @Injectable()
 export class PostService {
@@ -31,15 +35,54 @@ export class PostService {
   }
 
   async search(dto: SearchDto): Promise<SearchResponseDto> {
-    const trimmed = (dto.query ?? '').trim();
+    const query = (dto.query ?? '').trim();
     const Limit = dto.limit ?? 20;
     const Offset = dto.offset ?? 0;
-    if (!trimmed) return { posts: [], total: 0 };
-    const { posts, total } = await this.postRepository.webSearch(trimmed, {
-      limit: Limit,
-      offset: Offset,
-    });
-    return { posts, total };
+    if (!query) return { posts: [], total: 0 };
+
+    const { rows: orderedRows, posts } = await this.postRepository.webSearch(
+      query,
+      {
+        limit: Limit,
+        offset: Offset,
+      },
+    );
+
+    if (orderedRows.length === 0) {
+      return { posts: [], total: 0 };
+    }
+
+    const total = orderedRows[0].total;
+
+    const byId = new Map(posts.map((p) => [p.id, p]));
+
+    const items = orderedRows
+      .map((h) => {
+        const p = byId.get(h.id);
+        if (!p) return null;
+        return {
+          id: p.id,
+          title: p.title,
+          content: p.content,
+          type: p.type,
+          tags: p.tags,
+          author: { id: p.author.id, name: p.author.name } as publicUserDto,
+          participants: p.participants.map((participant) => ({
+            id: participant.id,
+            name: participant.name,
+          })) as publicUserDto[],
+          maxParticipants: p.maxParticipants,
+          createdAt: p.createdAt,
+          deadline: p.deadline,
+          imageUrls: p.imageUrls ?? [],
+          roommateDetails: p.roommateDetails,
+          status: p.status,
+          rank: h.rank,
+        };
+      })
+      .filter(Boolean) as SearchPostDto[];
+
+    return { posts: items, total };
   }
 
   async updatePost(

@@ -8,15 +8,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post, PostType, Prisma, RoommateDetails, User } from '@prisma/client';
-import { z } from 'zod';
-import { SearchPostDto, SearchResponseDto } from './dto/res/searchResponse.dto';
-
-const searchRowSchema = z.object({
-  id: z.string().uuid(),
-  rank: z.number(),
-  createdAt: z.coerce.date(),
-  total: z.coerce.number(),
-});
+import {
+  SearchRepoResponseDto,
+  SearchRowSchema,
+} from './dto/res/searchResponse.dto';
 
 //For a custom immutable_array_to_string function, refer to prisma\migrations\20250828014743_add_post_fts_gin
 const DOC = Prisma.sql`
@@ -293,7 +288,7 @@ export class PostRepository {
   async webSearch(
     query: string,
     { limit = 20, offset = 0 }: { limit?: number; offset?: number } = {},
-  ): Promise<SearchResponseDto> {
+  ): Promise<SearchRepoResponseDto> {
     const l = limit ?? 20;
     const o = offset ?? 0;
     const L = Math.min(Math.max(l, 1), 100);
@@ -319,17 +314,15 @@ export class PostRepository {
               OFFSET ${O}
               LIMIT ${L};
           `);
-    const parsed = searchRowSchema.array().safeParse(rows);
+    const parsed = SearchRowSchema.array().safeParse(rows);
     if (!parsed.success) {
       throw new InternalServerErrorException('Invalid search row shape');
     }
 
     const orderedRows = parsed.data;
-    if (orderedRows.length === 0) {
-      return { posts: [], total: 0 };
-    }
-    const total = orderedRows[0].total;
-    const ids = orderedRows.map((post) => post.id);
+
+    const ids = orderedRows.map((row) => row.id);
+
     const posts = await this.prisma.post.findMany({
       where: { id: { in: ids } },
       include: {
@@ -339,37 +332,6 @@ export class PostRepository {
       },
     });
 
-    const byId = new Map(posts.map((p) => [p.id, p]));
-    const items = orderedRows
-      .map((h) => {
-        const p = byId.get(h.id);
-        if (!p) return undefined;
-        return {
-          id: p.id,
-          title: p.title,
-          content: p.content,
-          type: p.type,
-          tags: p.tags,
-          author: { id: p.author.id, name: p.author.name } as Pick<
-            User,
-            'id' | 'name'
-          >,
-          participants: p.participants.map((participant) => ({
-            id: participant.id,
-            name: participant.name,
-          })) as Array<Pick<User, 'id' | 'name'>>,
-          maxParticipants: p.maxParticipants,
-          createdAt: p.createdAt,
-          deadline: p.deadline,
-          imageUrls: p.imageUrls ?? [],
-          roommateDetails: p.roommateDetails,
-          authorId: p.authorId,
-          status: p.status,
-          rank: h.rank,
-        };
-      })
-      .filter(Boolean) as SearchPostDto[];
-
-    return { posts: items, total };
+    return { rows: orderedRows, posts: posts };
   }
 }
