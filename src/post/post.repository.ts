@@ -323,7 +323,7 @@ export class PostRepository {
 
     const ids = orderedRows.map((row) => row.id);
 
-    const posts = await this.prisma.post.findMany({
+    const foundPosts = await this.prisma.post.findMany({
       where: { id: { in: ids } },
       include: {
         author: { select: { id: true, name: true } },
@@ -332,6 +332,6 @@ export class PostRepository {
       },
     });
 
-    return { rows: orderedRows, posts: posts };
+    return { rows: orderedRows, posts: foundPosts };
   }
 }
