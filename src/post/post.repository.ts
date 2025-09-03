@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -20,6 +21,9 @@ const DOC = Prisma.sql`
     setweight(to_tsvector('english', immutable_array_to_string(p.tags, ' ')), 'B') ||   
     setweight(to_tsvector('english', COALESCE(p.content, '')), 'C')
 )`;
+
+export const DEFAULT_LIMIT = 20;
+export const DEFAULT_OFFSET = 0;
 
 @Injectable()
 export class PostRepository {
@@ -289,12 +293,11 @@ export class PostRepository {
     query: string,
     { limit = 20, offset = 0 }: { limit?: number; offset?: number } = {},
   ): Promise<SearchRepoResponseDto> {
-    const l = limit ?? 20;
-    const o = offset ?? 0;
-    const L = Math.min(Math.max(l, 1), 100);
-    const O = Math.max(o, 0);
+    try {
+      const L = Math.min(limit ?? 20, DEFAULT_LIMIT);
+      const O = Math.max(offset ?? 0, DEFAULT_OFFSET);
 
-    const rows = await this.prisma.$queryRaw<unknown[]>(Prisma.sql`
+      const rows = await this.prisma.$queryRaw<unknown[]>(Prisma.sql`
               WITH query AS (
                   SELECT websearch_to_tsquery('english', ${query}) AS q
               )
@@ -314,24 +317,32 @@ export class PostRepository {
               OFFSET ${O}
               LIMIT ${L};
           `);
-    const parsed = SearchRowSchema.array().safeParse(rows);
-    if (!parsed.success) {
-      throw new InternalServerErrorException('Invalid search row shape');
+      const parsed = SearchRowSchema.array().safeParse(rows);
+      if (!parsed.success) {
+        throw new InternalServerErrorException('Invalid search row shape');
+      }
+
+      const orderedRows = parsed.data;
+
+      const ids = orderedRows.map((row) => row.id);
+
+      const foundPosts = await this.prisma.post.findMany({
+        where: { id: { in: ids } },
+        include: {
+          author: { select: { id: true, name: true } },
+          participants: { select: { id: true, name: true } },
+          roommateDetails: true,
+        },
+      });
+
+      return { rows: orderedRows, posts: foundPosts };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new ServiceUnavailableException('Search temporarily unavailable');
+      }
+      throw new InternalServerErrorException(
+        'An unexpected error occurred during the search.',
+      );
     }
-
-    const orderedRows = parsed.data;
-
-    const ids = orderedRows.map((row) => row.id);
-
-    const foundPosts = await this.prisma.post.findMany({
-      where: { id: { in: ids } },
-      include: {
-        author: { select: { id: true, name: true } },
-        participants: { select: { id: true, name: true } },
-        roommateDetails: true,
-      },
-    });
-
-    return { rows: orderedRows, posts: foundPosts };
   }
 }

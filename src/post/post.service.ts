@@ -1,15 +1,15 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { PostRepository } from './post.repository';
+import {
+  DEFAULT_LIMIT,
+  DEFAULT_OFFSET,
+  PostRepository,
+} from './post.repository';
 import { PostDto, PostListDto } from './dto/res/post.dto';
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
 import { SearchDto } from './dto/req/search.dto';
-import {
-  publicUserDto,
-  SearchPostDto,
-  SearchResponseDto,
-} from './dto/res/searchResponse.dto';
+import { SearchPostDto, SearchResponseDto } from './dto/res/searchResponse.dto';
 
 @Injectable()
 export class PostService {
@@ -36,8 +36,8 @@ export class PostService {
 
   async search(dto: SearchDto): Promise<SearchResponseDto> {
     const query = (dto.query ?? '').trim();
-    const Limit = dto.limit ?? 20;
-    const Offset = dto.offset ?? 0;
+    const Limit = dto.limit ?? DEFAULT_LIMIT;
+    const Offset = dto.offset ?? DEFAULT_OFFSET;
     if (!query) return { posts: [], total: 0 };
 
     const { rows: orderedRows, posts } = await this.postRepository.webSearch(
@@ -57,30 +57,11 @@ export class PostService {
     const byId = new Map(posts.map((p) => [p.id, p]));
 
     const items = orderedRows
-      .map((h) => {
-        const p = byId.get(h.id);
-        if (!p) return null;
-        return {
-          id: p.id,
-          title: p.title,
-          content: p.content,
-          type: p.type,
-          tags: p.tags,
-          author: { id: p.author.id, name: p.author.name } as publicUserDto,
-          participants: p.participants.map((participant) => ({
-            id: participant.id,
-            name: participant.name,
-          })) as publicUserDto[],
-          maxParticipants: p.maxParticipants,
-          createdAt: p.createdAt,
-          deadline: p.deadline,
-          imageUrls: p.imageUrls ?? [],
-          roommateDetails: p.roommateDetails,
-          status: p.status,
-          rank: h.rank,
-        };
+      .map((row) => {
+        const post = byId.get(row.id);
+        return post ? new SearchPostDto({ ...post }) : null;
       })
-      .filter(Boolean) as SearchPostDto[];
+      .filter((item): item is SearchPostDto => item !== null);
 
     return { posts: items, total };
   }

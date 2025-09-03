@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsNumber,
   IsObject,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -115,15 +116,12 @@ export class SearchPostDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => publicUserDto)
-  @Transform(({ value }) =>
-    Array.isArray(value)
-      ? (value as { id: string; name: string }[]).map(({ id, name }) => ({
-          id,
-          name,
-        }))
-      : [],
+  @Transform(({ value }: { value: User[] }) =>
+    value.map((user) => {
+      return { id: user.id, name: user.name };
+    }),
   )
-  participants!: publicUserDto[];
+  participants!: publicUserDto[] | User[];
 
   @ApiProperty({
     description:
@@ -152,18 +150,11 @@ export class SearchPostDto {
   })
   imageUrls!: string[];
 
-  @ApiProperty({
-    description:
-      'Specific details for posts of type ROOMMATE (RoommatePostDto).',
-    nullable: true,
-  })
+  @IsOptional()
   @ValidateNested()
-  @Transform(({ value }: { value: User[] }) =>
-    value.map((user) => {
-      return { id: user.id, name: user.name };
-    }),
-  )
-  roommateDetails!: RoommatePostDto | null;
+  @Type(() => RoommatePostDto)
+  @ApiPropertyOptional({ type: RoommatePostDto })
+  readonly roommateDetails: RoommatePostDto | null;
 
   @ApiProperty({
     description:
@@ -172,6 +163,10 @@ export class SearchPostDto {
     example: PostStatus.OPEN,
   })
   status!: PostStatus;
+
+  constructor(partial: Partial<SearchPostDto>) {
+    Object.assign(this, partial);
+  }
 }
 
 export class SearchResponseDto {
