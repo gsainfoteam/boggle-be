@@ -13,7 +13,7 @@ import { PostType, User } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import { RoommatePostDto } from '../roommatePost.dto';
 
-class basicUserDto {
+class BasicUserDto {
   @IsString()
   @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
   readonly id: string;
@@ -49,8 +49,8 @@ export class PostDto {
   @Transform(({ value }: { value: User }) => {
     return { id: value.id, name: value.name };
   })
-  @ApiProperty({ example: basicUserDto })
-  readonly author: basicUserDto | User;
+  @ApiProperty({ example: BasicUserDto })
+  readonly author: BasicUserDto | User;
 
   @IsArray()
   @Transform(({ value }: { value: User[] }) =>
@@ -58,8 +58,8 @@ export class PostDto {
       return { id: user.id, name: user.name };
     }),
   )
-  @ApiProperty({ type: [basicUserDto] })
-  readonly participants: basicUserDto[] | User[];
+  @ApiProperty({ type: [BasicUserDto] })
+  readonly participants: BasicUserDto[] | User[];
 
   @IsNumber()
   @ApiProperty({ example: 5 })

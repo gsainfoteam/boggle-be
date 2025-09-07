@@ -131,3 +131,8 @@ model Room {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Subject {
+  id      String  @id
+  name    String
+}
