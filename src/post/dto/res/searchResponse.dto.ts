@@ -1,18 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString } from 'class-validator';
+import { IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 import { z } from 'zod';
 import { PostDto } from './post.dto';
-
-export class basicUserDto {
-  @IsString()
-  @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
-  readonly id: string;
-
-  @IsString()
-  @ApiProperty({ example: 'John Doe' })
-  readonly name: string;
-}
 
 export const SearchRowSchema = z.object({
   id: z.string().uuid(),
