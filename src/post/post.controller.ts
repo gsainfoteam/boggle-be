@@ -30,7 +30,6 @@ import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { IdPGuard } from 'src/user/guard/idp.guard';
 import { SearchDto } from './dto/req/search.dto';
-import { SearchResponseDto } from './dto/res/searchResponse.dto';
 
 @Controller('post')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -54,8 +53,8 @@ export class PostController {
 
   @Get('search')
   @ApiOperation({ summary: 'Search by text' })
-  @ApiOkResponse({ description: 'Search results', type: SearchResponseDto })
-  async search(@Query() searchDto: SearchDto): Promise<SearchResponseDto> {
+  @ApiOkResponse({ description: 'Search results', type: PostListDto })
+  async search(@Query() searchDto: SearchDto): Promise<PostListDto> {
     return await this.postService.search(searchDto);
   }
 

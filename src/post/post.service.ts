@@ -9,7 +9,6 @@ import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
 import { SearchDto } from './dto/req/search.dto';
-import { SearchPostDto, SearchResponseDto } from './dto/res/searchResponse.dto';
 
 @Injectable()
 export class PostService {
@@ -34,7 +33,7 @@ export class PostService {
     return this.getPost(post.id);
   }
 
-  async search(dto: SearchDto): Promise<SearchResponseDto> {
+  async search(dto: SearchDto): Promise<PostListDto> {
     const query = (dto.query ?? '').trim();
     const Limit = dto.limit ?? DEFAULT_LIMIT;
     const Offset = dto.offset ?? DEFAULT_OFFSET;
@@ -59,9 +58,9 @@ export class PostService {
     const items = orderedRows
       .map((row) => {
         const post = byId.get(row.id);
-        return post ? new SearchPostDto({ ...post }) : null;
+        return post ? new PostDto({ ...post }) : null;
       })
-      .filter((item): item is SearchPostDto => item !== null);
+      .filter((item): item is PostDto => item !== null);
 
     return { posts: items, total };
   }

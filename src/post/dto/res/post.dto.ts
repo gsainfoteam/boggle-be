@@ -12,16 +12,7 @@ import {
 import { PostType, User } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import { RoommatePostDto } from '../roommatePost.dto';
-
-class basicUserDto {
-  @IsString()
-  @ApiProperty({ example: '70025914-2097-4eb1-9ebb-c2181f02b4f3' })
-  readonly id: string;
-
-  @IsString()
-  @ApiProperty({ example: 'John Doe' })
-  readonly name: string;
-}
+import { basicUserDto } from './searchResponse.dto';
 
 export class PostDto {
   @IsString()
