@@ -141,12 +141,16 @@ export class MessageRepository {
     userId: string,
     { roomId, messageIds }: DeleteMessageDto,
   ): Promise<{ count: number }> {
-    const isRoomExisting = await this.prisma.room.findFirstOrThrow({
+    const isRoomExisting = await this.prisma.room.findFirst({
       where: {
         id: roomId,
         ...this.baseWhereDeleted,
       },
     });
+
+    if (!isRoomExisting) {
+      throw new NotFoundException('Room not found or has been deleted');
+    }
 
     const messages = await this.prisma.message.findMany({
       where: {

@@ -19,9 +19,10 @@ export class MessageService {
     try {
       return await this.messageRepository.createMessage(createMessageDto);
     } catch (error) {
+      const errorStack = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         `Failed to create message in room: ${createMessageDto.roomId}`,
-        error.stack,
+        errorStack,
       );
       throw error;
     }
@@ -42,9 +43,10 @@ export class MessageService {
 
       return await this.messageRepository.updateMessage(updateMessageDto);
     } catch (error) {
+      const errorStack = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         `Failed to update message ${updateMessageDto.messageId} for user ${userId}`,
-        error.stack,
+        errorStack,
       );
       throw error;
     }
@@ -60,9 +62,10 @@ export class MessageService {
 
       return messages;
     } catch (error) {
+      const errorStack = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         `Failed to retrieve messages for room: ${roomId}`,
-        error.stack,
+        errorStack,
       );
       throw new WsException('Failed to retrieve room messages');
     }
@@ -72,7 +75,8 @@ export class MessageService {
     try {
       return await this.messageRepository.getMessage(uuid);
     } catch (error) {
-      this.logger.error(`Failed to get message: ${uuid}`, error.stack);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error(`Failed to get message: ${uuid}`, errorStack);
       throw error;
     }
   }
@@ -93,9 +97,10 @@ export class MessageService {
 
       return result;
     } catch (error) {
+      const errorStack = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         `Failed to delete messages for user ${userId}: ${deleteMessageDto.messageIds.join(', ')}`,
-        error.stack,
+        errorStack,
       );
       throw error;
     }

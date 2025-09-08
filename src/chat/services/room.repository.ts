@@ -6,7 +6,7 @@ import {
   UpdateRoomDto,
 } from '../dto/room.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { Room } from '@prisma/client';
 

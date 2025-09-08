@@ -17,9 +17,10 @@ export class ConnectedUserService {
     try {
       return await this.connectedUserRepository.create(userPayload, socketId);
     } catch (error) {
+      const errorStack = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         `Failed to create connected user for ${userPayload.id}`,
-        error.stack,
+        errorStack,
       );
       throw error;
     }
@@ -29,9 +30,10 @@ export class ConnectedUserService {
     try {
       return await this.connectedUserRepository.delete(socketId);
     } catch (error) {
+      const errorStack = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         `Failed to delete connected user ${socketId}`,
-        error.stack,
+        errorStack,
       );
       throw error;
     }
@@ -43,7 +45,8 @@ export class ConnectedUserService {
       this.logger.log(`Deleted ${result.count} connected users`);
       return result;
     } catch (error) {
-      this.logger.error('Failed to delete all connected users', error.stack);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+      this.logger.error('Failed to delete all connected users', errorStack);
       throw new WsException('Failed to delete all connected users');
     }
   }
@@ -58,9 +61,10 @@ export class ConnectedUserService {
     try {
       return await this.connectedUserRepository.findByUserIds(userIds);
     } catch (error) {
+      const errorStack = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         `Failed to find connected users for IDs: ${userIds.join(', ')}`,
-        error.stack,
+        errorStack,
       );
       throw new WsException('Failed to retrieve connected users');
     }

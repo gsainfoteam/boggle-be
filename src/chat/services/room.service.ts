@@ -23,9 +23,14 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error while creating room: ${error.message}`,
-        error.stack,
+        `Unexpected error while creating room: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error while creating room.');
     }
@@ -48,9 +53,14 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error while deleting room ${uuid} by user ${userId}: ${error.message}`,
-        error.stack,
+        `Unexpected error while deleting room ${uuid} by user ${userId}: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error while deleting room.');
     }
@@ -63,9 +73,14 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error when finding room by ID ${uuid}: ${error.message}`,
-        error.stack,
+        `Unexpected error when finding room by ID ${uuid}: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error when retrieving room.');
     }
@@ -77,9 +92,13 @@ export class RoomService {
       this.logger.log(`Found ${rooms.length} rooms for user ${userId}`);
       return rooms;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error finding rooms for user ${userId}: ${error.message}`,
-        error.stack,
+        `Error finding rooms for user ${userId}: ${errorMessage}`,
+        errorStack,
       );
       if (error instanceof WsException) {
         throw error;
@@ -109,9 +128,13 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error when updating room ${updateRoomDto.roomId} by user ${userId}: ${error.message}`,
-        error.stack,
+        `Unexpected error when updating room ${updateRoomDto.roomId} by user ${userId}: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error when updating room.');
     }
@@ -127,9 +150,13 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error for user ${userId} joining room ${roomId}: ${error.message}`,
-        error.stack,
+        `Unexpected error for user ${userId} joining room ${roomId}: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error when joining room.');
     }
@@ -145,9 +172,13 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error for user ${userId} leaving room ${roomId}: ${error.message}`,
-        error.stack,
+        `Unexpected error for user ${userId} leaving room ${roomId}: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error when leaving room.');
     }
@@ -170,9 +201,13 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error when assigning users to room ${assignUsersDto.roomId} by user ${userId}: ${error.message}`,
-        error.stack,
+        `Unexpected error when assigning users to room ${assignUsersDto.roomId} by user ${userId}: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error when assigning users.');
     }
@@ -195,9 +230,13 @@ export class RoomService {
       if (error instanceof WsException) {
         throw error;
       }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Unexpected error when deleting users from room ${deleteUsersDto.roomId} by user ${userId}: ${error.message}`,
-        error.stack,
+        `Unexpected error when deleting users from room ${deleteUsersDto.roomId} by user ${userId}: ${errorMessage}`,
+        errorStack,
       );
       throw new WsException('Unexpected error when deleting users.');
     }
