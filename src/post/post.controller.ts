@@ -29,6 +29,7 @@ import {
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { IdPGuard } from 'src/user/guard/idp.guard';
+import { SearchDto } from './dto/req/search.dto';
 
 @Controller('post')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -48,6 +49,13 @@ export class PostController {
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   async getPostList(@Query() query: PostListQueryDto): Promise<PostListDto> {
     return await this.postService.getPostList(query);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search by text' })
+  @ApiOkResponse({ description: 'Search results', type: PostListDto })
+  async search(@Query() searchDto: SearchDto): Promise<PostListDto> {
+    return await this.postService.search(searchDto);
   }
 
   @Get(':id')
