@@ -1,9 +1,14 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { PostRepository } from './post.repository';
+import {
+  DEFAULT_LIMIT,
+  DEFAULT_OFFSET,
+  PostRepository,
+} from './post.repository';
 import { PostDto, PostListDto } from './dto/res/post.dto';
 import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
+import { SearchDto } from './dto/req/search.dto';
 
 @Injectable()
 export class PostService {
@@ -26,6 +31,38 @@ export class PostService {
     const post = await this.postRepository.createPost(postDto, user);
 
     return this.getPost(post.id);
+  }
+
+  async search(dto: SearchDto): Promise<PostListDto> {
+    const query = (dto.query ?? '').trim();
+    const Limit = dto.limit ?? DEFAULT_LIMIT;
+    const Offset = dto.offset ?? DEFAULT_OFFSET;
+    if (!query) return { posts: [], total: 0 };
+
+    const { rows: orderedRows, posts } = await this.postRepository.webSearch(
+      query,
+      {
+        limit: Limit,
+        offset: Offset,
+      },
+    );
+
+    if (orderedRows.length === 0) {
+      return { posts: [], total: 0 };
+    }
+
+    const total = orderedRows[0].total;
+
+    const byId = new Map(posts.map((p) => [p.id, p]));
+
+    const items = orderedRows
+      .map((row) => {
+        const post = byId.get(row.id);
+        return post ? new PostDto({ ...post }) : null;
+      })
+      .filter((item): item is PostDto => item !== null);
+
+    return { posts: items, total };
   }
 
   async updatePost(
