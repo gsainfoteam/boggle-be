@@ -4,7 +4,6 @@ import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { ChatModule } from './chat/chat.module';
 import { ImageModule } from './image/image.module';
-import { CrawlModule } from './crawl/crawl.module';
 
 @Module({
   imports: [
@@ -13,7 +12,6 @@ import { CrawlModule } from './crawl/crawl.module';
     PostModule,
     ChatModule,
     ImageModule,
-    CrawlModule,
   ],
 })
 export class AppModule {}

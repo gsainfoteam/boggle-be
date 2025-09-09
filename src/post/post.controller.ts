@@ -30,6 +30,7 @@ import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { IdPGuard } from 'src/user/guard/idp.guard';
 import { SearchDto } from './dto/req/search.dto';
+import { SubjectDto } from './dto/res/subject.dto';
 
 @Controller('post')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -54,8 +55,20 @@ export class PostController {
   @Get('search')
   @ApiOperation({ summary: 'Search by text' })
   @ApiOkResponse({ description: 'Search results', type: PostListDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   async search(@Query() searchDto: SearchDto): Promise<PostListDto> {
     return await this.postService.search(searchDto);
+  }
+
+  @Get('subject')
+  @ApiOperation({ summary: 'Get Subjects' })
+  @ApiOkResponse({
+    description: 'Get subjects from json data',
+    type: SubjectDto,
+  })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  getSubjects(): SubjectDto[] {
+    return this.postService.getSubjects();
   }
 
   @Get(':id')

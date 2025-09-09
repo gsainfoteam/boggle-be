@@ -9,6 +9,9 @@ import { CreatePostDto } from './dto/req/createPost.dto';
 import { PostListQueryDto } from './dto/req/postListQuery.dto';
 import { Post } from '@prisma/client';
 import { SearchDto } from './dto/req/search.dto';
+import { readFileSync } from 'fs';
+import { SubjectDto } from './dto/res/subject.dto';
+import * as path from 'path';
 
 @Injectable()
 export class PostService {
@@ -63,6 +66,12 @@ export class PostService {
       .filter((item): item is PostDto => item !== null);
 
     return { posts: items, total };
+  }
+
+  getSubjects(): SubjectDto[] {
+    const filePath = path.join(__dirname, 'data', 'subject.json');
+
+    return JSON.parse(readFileSync(filePath, 'utf-8')) as SubjectDto[];
   }
 
   async updatePost(
