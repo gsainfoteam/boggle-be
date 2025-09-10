@@ -78,9 +78,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.connectedUserService.deleteConnectedUser(socket.id);
       this.logger.log(`Client disconnected: ${socket.id}`);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error during disconnect for socket ${socket.id}: ${error.message}`,
-        error.stack,
+        `Error during disconnect for socket ${socket.id}: ${errorMessage}`,
+        stackTrace,
       );
     }
   }
@@ -116,7 +120,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Room with ID ${newRoom.id} created and participants notified successfully.`,
       );
     } catch (error) {
-      this.logger.error(`Failed to create room: ${error.message}`, error.stack);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
+      this.logger.error(`Failed to create room: ${errorMessage}`, stackTrace);
       throw new WsException('Error occurred while creating the room.');
     }
   }
@@ -140,9 +148,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `User ID ${userId} fetched details for Room UUID ${room.id} successfully.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error fetching details for Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Error fetching details for Room UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while fetching room details.');
     }
@@ -180,9 +192,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Room with UUID ${updateRoomDto.roomId} updated and participants notified successfully.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error updating room with UUID ${updateRoomDto.roomId}: ${error.message}`,
-        error.stack,
+        `Error updating room with UUID ${updateRoomDto.roomId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while updating room details.');
     }
@@ -209,9 +225,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `User ID ${userId} joined Room UUID ${room.id} successfully.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error joining room with UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Error joining room with UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while joining the room.');
     }
@@ -255,9 +275,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Users assigned to Room UUID ${roomId} successfully by User ID ${userId}.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error assigning users to Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Error assigning users to Room UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException(
         'Error occurred while assigning users to the room.',
@@ -284,9 +308,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `User ID ${userId} left Room UUID ${room.id} successfully.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error leaving room with UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Error leaving room with UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while leaving the room.');
     }
@@ -329,9 +357,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Users deleted from Room UUID ${roomId} successfully by User ID ${userId}.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error deleting users from Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Error deleting users from Room UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException(
         'Error occurred while deleting users from the room.',
@@ -363,9 +395,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Room with UUID ${roomId} deleted successfully by user ID ${userId}.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Error deleting room with UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Error deleting room with UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while deleting the room.');
     }
@@ -397,9 +433,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `User ID ${userId} sent a new message in Room UUID ${roomId}`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Failed to send message in Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Failed to send message in Room UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while sending the message.');
     }
@@ -423,9 +463,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
       this.server.to(socket.id).emit('allMessages', messages);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Failed to fetch messages for Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch messages for Room UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while fetching messages.');
     }
@@ -459,9 +503,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Message UUID ${updateMessageDto.messageId} updated successfully by User ID ${userId}.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Failed to update message UUID ${updateMessageDto.messageId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Failed to update message UUID ${updateMessageDto.messageId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while updating the message.');
     }
@@ -489,9 +537,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Messages deleted successfully in Room UUID ${roomId} by User ID ${userId}.`,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : String(error);
+
       this.logger.error(
-        `Failed to delete messages in Room UUID ${roomId} by User ID ${userId}: ${error.message}`,
-        error.stack,
+        `Failed to delete messages in Room UUID ${roomId} by User ID ${userId}: ${errorMessage}`,
+        stackTrace,
       );
       throw new WsException('Error occurred while deleting messages.');
     }
@@ -510,13 +562,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       return userPayload;
     } catch (error) {
-      if (error.name === 'TokenExpiredError') {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
         throw new UnauthorizedException(
           'Token expired. Please refresh your token.',
         );
       }
       this.logger.warn(
-        `JWT verification failed for socket ${socket.id}: ${error.message}`,
+        `JWT verification failed for socket ${socket.id}: ${errorMessage}`,
       );
       throw new UnauthorizedException('Authentication failed: Invalid token.');
     }
@@ -537,10 +591,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private handleConnectionError(socket: Socket, error: Error): void {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     this.logger.error(
-      `Connection error for socket ${socket.id}: ${error.message}`,
+      `Connection error for socket ${socket.id}: ${errorMessage}`,
     );
-    socket.emit('exception', error.message || 'Authentication error');
+    socket.emit('exception', errorMessage || 'Authentication error');
     socket.disconnect();
   }
 

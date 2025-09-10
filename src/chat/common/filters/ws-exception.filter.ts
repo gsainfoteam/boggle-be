@@ -6,14 +6,24 @@ import { Socket } from 'socket.io';
 export class WsExceptionFilter extends BaseWsExceptionFilter {
   private readonly logger = new Logger(WsExceptionFilter.name);
 
+  private safeStringify(data: unknown): string {
+    try {
+      return JSON.stringify(data);
+    } catch {
+      return '[Unable to stringify data]';
+    }
+  }
+
   catch(exception: WsException, host: ArgumentsHost) {
     const client = host.switchToWs().getClient<Socket>();
-    const data = host.switchToWs().getData();
+    const data: unknown = host.switchToWs().getData();
+    const args = host.getArgs();
+    const event = typeof args?.[0] === 'string' ? args[0] : 'unknown';
 
     this.logger.error(
       `WebSocket Exception: ${exception.message}`,
       exception.stack,
-      `Event: ${host.getArgs()[0]} | Data: ${JSON.stringify(data)}`,
+      `Event: ${event} | Data: ${this.safeStringify(data)}`,
     );
 
     const errorResponse = {
